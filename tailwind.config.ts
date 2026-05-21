@@ -15,11 +15,14 @@ const config: Config = {
         dark: '#1A1A18',
       },
       fontFamily: {
-        display: ['Barlow Condensed', 'sans-serif'],
-        body: ['Barlow', 'sans-serif'],
+        display: ['var(--font-barlow-condensed)', 'Barlow Condensed', 'sans-serif'],
+        body: ['var(--font-barlow)', 'Barlow', 'sans-serif'],
       },
       letterSpacing: {
         widest: '0.25em',
+      },
+      accentColor: {
+        gold: '#C9A870',
       },
     },
   },
