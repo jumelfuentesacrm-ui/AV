@@ -25,7 +25,7 @@ function LoginForm() {
         setError(error.message)
         setLoading(false)
       } else {
-        window.location.href = redirectTo ?? '/account'
+        window.location.href = redirectTo ?? '/api/auth/redirect'
       }
     } catch (err: any) {
       setError(err?.message ?? 'Error de conexión')

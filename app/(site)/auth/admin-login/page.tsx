@@ -24,7 +24,7 @@ function AdminLoginForm() {
       setError('Las puertas del archivo permanecen cerradas.')
       setLoading(false)
     } else {
-      window.location.href = redirectTo
+      window.location.href = '/api/auth/redirect'
     }
   }
 
