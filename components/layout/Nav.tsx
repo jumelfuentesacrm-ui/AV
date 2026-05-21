@@ -20,8 +20,7 @@ type UserState = { name: string; role: string } | null
 export default function Nav() {
   const navRef  = useRef<HTMLElement>(null)
   const router  = useRouter()
-  const [user, setUser]       = useState<UserState>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<UserState>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -51,7 +50,7 @@ export default function Nav() {
   useEffect(() => {
     const load = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (!authUser) { setUser(null); setLoading(false); return }
+      if (!authUser) { setUser(null); return }
       const { data: profile } = await supabase
         .from('profiles')
         .select('full_name, role, email')
@@ -59,7 +58,6 @@ export default function Nav() {
         .single()
       const name = profile?.full_name || authUser.email?.split('@')[0] || 'Usuario'
       setUser({ name, role: profile?.role ?? 'customer' })
-      setLoading(false)
     }
     load()
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => load())
@@ -91,27 +89,25 @@ export default function Nav() {
       <div className="nav-right">
         <a href="#manifiesto" className="nav-manifiesto" data-link="manifiesto">Manifiesto</a>
 
-        {!loading && (
-          user ? (
-            <>
-              <Link href={destination} className="nav-login">
-                {user.name}
-              </Link>
-              <button
-                onClick={handleSignOut}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontFamily: 'var(--f-mono)', fontSize: 10,
-                  letterSpacing: '0.2em', textTransform: 'uppercase',
-                  color: 'var(--av-gray)', opacity: 0.7, padding: '0 4px',
-                }}
-              >
-                Salir
-              </button>
-            </>
-          ) : (
-            <Link href="/auth/login" className="nav-login">Log In</Link>
-          )
+        {user ? (
+          <>
+            <Link href={destination} className="nav-login">
+              {user.name}
+            </Link>
+            <button
+              onClick={handleSignOut}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontFamily: 'var(--f-mono)', fontSize: 10,
+                letterSpacing: '0.2em', textTransform: 'uppercase',
+                color: 'var(--av-gray)', opacity: 0.7, padding: '0 4px',
+              }}
+            >
+              Salir
+            </button>
+          </>
+        ) : (
+          <Link href="/auth/login" className="nav-login">Log In</Link>
         )}
 
         <a href="#" className="nav-lang">ES&nbsp;/&nbsp;EN</a>
@@ -133,6 +129,7 @@ export default function Nav() {
         ) : (
           <Link href="/auth/login">Log In</Link>
         )}
+
       </div>
     </nav>
   )
