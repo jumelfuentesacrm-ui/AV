@@ -56,6 +56,15 @@ body {
   @apply w-full bg-white border border-charcoal/20 text-charcoal font-body text-sm px-3 py-2 focus:outline-none focus:border-gold transition-colors duration-200;
 }
 
+/* Manifesto starburst pulse */
+@keyframes av-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.12); opacity: 0.7; }
+}
+.av-pulse-slow {
+  animation: av-pulse 4s ease-in-out infinite;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
