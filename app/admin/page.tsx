@@ -1,111 +1,49 @@
-import { createClient } from '@/lib/supabase/server'
-import StarburstLogo from '@/components/ui/StarburstLogo'
-import Link from 'next/link'
+export const dynamic = 'force-dynamic'
 
-async function getStats() {
-  const supabase = createClient()
+import { createServiceClient } from '@/lib/supabase/server'
+import DashboardClient, { type DashboardStats } from './DashboardClient'
 
-  const [
-    { count: usersCount },
-    { count: ordersCount },
-    { count: filmsCount },
-    { count: productsCount },
-    { data: ordersData },
-    { data: pointsData },
-  ] = await Promise.all([
+async function getData() {
+  const supabase = createServiceClient()
+  const now = new Date()
+  const d30   = new Date(now.getTime() -  30 * 86400000).toISOString()
+  const d60   = new Date(now.getTime() -  60 * 86400000).toISOString()
+  const d90   = new Date(now.getTime() -  90 * 86400000).toISOString()
+
+  const [usersRes, productsRes, ordersAllRes, orders30Res, ordersPrev30Res, newUsers30Res, chartOrdersRes, ordersUsersRes] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
-    supabase.from('orders').select('*', { count: 'exact', head: true }),
-    supabase.from('films').select('*', { count: 'exact', head: true }),
     supabase.from('products').select('*', { count: 'exact', head: true }).eq('active', true),
-    supabase.from('orders').select('total'),
-    supabase.from('points_ledger').select('amount').gte('amount', 0),
+    supabase.from('orders').select('*', { count: 'exact', head: true }),
+    supabase.from('orders').select('total, created_at').gte('created_at', d30),
+    supabase.from('orders').select('total').gte('created_at', d60).lt('created_at', d30),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', d30),
+    supabase.from('orders').select('total, created_at').gte('created_at', d90),
+    supabase.from('orders').select('user_id'),
   ])
 
-  const revenue = (ordersData ?? []).reduce((sum: number, o: { total: number }) => sum + o.total, 0)
-  const totalPoints = (pointsData ?? []).reduce((sum: number, e: { amount: number }) => sum + e.amount, 0)
+  const orders30  = orders30Res.data  ?? []
+  const chartOrds = chartOrdersRes.data ?? []
+  const revenue30d     = orders30.reduce((s, o) => s + (o.total ?? 0), 0)
+  const revenuePrev30d = (ordersPrev30Res.data ?? []).reduce((s, o) => s + (o.total ?? 0), 0)
+  const usersWithOrders = new Set((ordersUsersRes.data ?? []).map((o: { user_id: string }) => o.user_id)).size
 
-  return {
-    users: usersCount ?? 0,
-    orders: ordersCount ?? 0,
-    films: filmsCount ?? 0,
-    products: productsCount ?? 0,
-    revenue,
-    totalPoints,
+  const stats: DashboardStats = {
+    users:          usersRes.count    ?? 0,
+    orders:         ordersAllRes.count ?? 0,
+    products:       productsRes.count  ?? 0,
+    revenue30d,
+    revenuePrev30d,
+    orders30d:      orders30.length,
+    ordersPrev30d:  ordersPrev30Res.data?.length ?? 0,
+    newUsers30d:    newUsers30Res.count ?? 0,
+    usersWithOrders,
+    aov:            orders30.length > 0 ? revenue30d / orders30.length : 0,
   }
+
+  return { stats, chartOrders: chartOrds }
 }
 
 export default async function AdminDashboard() {
-  const stats = await getStats()
-
-  const cards = [
-    { label: 'Usuarios', value: stats.users.toString(), href: '/admin/users', icon: '◉' },
-    { label: 'Pedidos', value: stats.orders.toString(), href: '/admin/orders', icon: '≡' },
-    { label: 'Ingresos', value: `$${stats.revenue.toFixed(2)}`, href: '/admin/orders', icon: '$' },
-    { label: 'Puntos Emitidos', value: stats.totalPoints.toFixed(0), href: '/admin/users', icon: '★' },
-    { label: 'Cortometrajes', value: stats.films.toString(), href: '/admin/films', icon: '▷' },
-    { label: 'Productos Activos', value: stats.products.toString(), href: '/admin/merch', icon: '◻' },
-  ]
-
-  return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="mb-10">
-        <div className="flex items-center gap-3 mb-2">
-          <StarburstLogo size={28} color="#C9A870" />
-          <h1 className="font-display font-extrabold text-3xl tracking-wider uppercase text-charcoal">
-            Dashboard
-          </h1>
-        </div>
-        <p className="font-body text-sm text-charcoal/40">
-          Bienvenido al panel de administración de Archivo Vivo.
-        </p>
-      </div>
-
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
-        {cards.map(({ label, value, href, icon }) => (
-          <Link
-            key={label}
-            href={href}
-            className="group bg-dark text-cream p-6 hover:bg-charcoal transition-colors duration-200"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <span className="text-gold/60 text-xl">{icon}</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cream/20 group-hover:text-gold/40 transition-colors duration-200">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-            </div>
-            <p className="font-display font-extrabold text-3xl text-cream mb-1">{value}</p>
-            <p className="font-body text-xs text-cream/40 tracking-widest uppercase">{label}</p>
-          </Link>
-        ))}
-      </div>
-
-      {/* Quick links */}
-      <div>
-        <h2 className="font-display font-bold text-xl tracking-wider uppercase text-charcoal mb-4">
-          Acciones Rápidas
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            { href: '/admin/films', label: 'Gestionar Cortometrajes', desc: 'Añadir, editar o eliminar proyectos' },
-            { href: '/admin/merch', label: 'Gestionar Productos', desc: 'Inventario, precios y variantes' },
-            { href: '/admin/machines', label: 'Gestionar Máquinas', desc: 'Ubicaciones y horarios' },
-          ].map(({ href, label, desc }) => (
-            <Link
-              key={href}
-              href={href}
-              className="group border border-charcoal/10 p-5 hover:border-gold/40 transition-colors duration-200"
-            >
-              <h3 className="font-display font-bold text-base tracking-wider uppercase text-charcoal group-hover:text-gold transition-colors duration-200 mb-1">
-                {label}
-              </h3>
-              <p className="font-body text-xs text-charcoal/40">{desc}</p>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
+  const { stats, chartOrders } = await getData()
+  return <DashboardClient stats={stats} chartOrders={chartOrders} />
 }
