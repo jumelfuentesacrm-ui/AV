@@ -19,12 +19,17 @@ function AdminLoginForm() {
     setLoading(true)
     setError(null)
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-    if (signInError) {
-      setError('Las puertas del archivo permanecen cerradas.')
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      if (signInError) {
+        setError('Las puertas del archivo permanecen cerradas.')
+        setLoading(false)
+      } else {
+        window.location.href = '/api/auth/redirect'
+      }
+    } catch (err: any) {
+      setError(err?.message ?? 'Error de conexión. Intenta de nuevo.')
       setLoading(false)
-    } else {
-      window.location.href = '/api/auth/redirect'
     }
   }
 
