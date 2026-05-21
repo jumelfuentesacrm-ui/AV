@@ -5,13 +5,13 @@ import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 function AdminLoginForm() {
+  const searchParams = useSearchParams()
+  const redirectTo   = searchParams.get('redirect') ?? '/admin'
+  const hasError     = searchParams.get('error') === '1'
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState<string | null>(hasError ? 'No tienes acceso al archivo.' : null)
-  const searchParams = useSearchParams()
-  const redirectTo   = searchParams.get('redirect') ?? '/admin'
-  const hasError     = searchParams.get('error') === '1'
   const supabase     = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
