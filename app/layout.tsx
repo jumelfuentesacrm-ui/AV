@@ -36,6 +36,11 @@ export const metadata: Metadata = {
   description:
     'Archivo Vivo. Ideas. Visión. Legado. Cine, moda y cultura desde Puerto Rico.',
   keywords: ['Puerto Rico', 'cine', 'cortometrajes', 'moda', 'cultura', 'Archivo Vivo', 'AV'],
+  manifest: '/manifest.json',
+  icons: {
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    apple: [{ url: '/apple-icon.svg', sizes: '180x180', type: 'image/svg+xml' }],
+  },
   openGraph: {
     title: 'ARCHIVO VIVO — Ideas. Visión. Legado.',
     description: 'Ideas. Visión. Legado.',

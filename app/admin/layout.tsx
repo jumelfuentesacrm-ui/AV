@@ -30,7 +30,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .eq('id', user.id)
     .single()
 
-  if (!profile || !['admin', 'employee'].includes(profile.role)) redirect('/')
+  if (!profile || !['admin', 'employee'].includes(profile.role)) redirect('/auth/admin-login?error=1')
 
   const isAdmin = profile.role === 'admin'
 

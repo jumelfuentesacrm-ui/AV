@@ -8,9 +8,10 @@ function AdminLoginForm() {
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState<string | null>(null)
+  const [error, setError]       = useState<string | null>(hasError ? 'No tienes acceso al archivo.' : null)
   const searchParams = useSearchParams()
   const redirectTo   = searchParams.get('redirect') ?? '/admin'
+  const hasError     = searchParams.get('error') === '1'
   const supabase     = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -18,34 +19,12 @@ function AdminLoginForm() {
     setLoading(true)
     setError(null)
 
-    try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-      if (signInError) {
-        setError('Las puertas del archivo permanecen cerradas.')
-        setLoading(false)
-        return
-      }
-
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setError('No se pudo verificar la identidad.'); setLoading(false); return }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-      if (!profile || !['admin', 'employee'].includes(profile.role)) {
-        await supabase.auth.signOut()
-        setError('No tienes acceso al archivo.')
-        setLoading(false)
-        return
-      }
-
-      window.location.href = redirectTo
-    } catch (err: any) {
-      setError('Error de conexión. Intenta de nuevo.')
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+    if (signInError) {
+      setError('Las puertas del archivo permanecen cerradas.')
       setLoading(false)
+    } else {
+      window.location.href = redirectTo
     }
   }
 
