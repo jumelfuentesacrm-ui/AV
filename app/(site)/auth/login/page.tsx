@@ -1,9 +1,8 @@
-
 'use client'
 
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 function LoginForm() {
@@ -11,23 +10,41 @@ function LoginForm() {
   const [password, setPassword] = useState('')
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState<string | null>(null)
-  const router       = useRouter()
   const searchParams = useSearchParams()
-  const redirect     = searchParams.get('redirect') ?? '/account'
+  const redirectTo   = searchParams.get('redirect')
   const supabase     = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (signInError) {
       setError('Correo o contraseña incorrectos.')
       setLoading(false)
-    } else {
-      router.push(redirect)
-      router.refresh()
+      return
     }
+
+    // If middleware sent us here with a specific destination, honor it
+    if (redirectTo) {
+      window.location.href = redirectTo
+      return
+    }
+
+    // Otherwise route by role
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { window.location.href = '/'; return }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    const role = profile?.role ?? 'customer'
+    window.location.href = (role === 'admin' || role === 'employee') ? '/admin' : '/account'
   }
 
   return (
@@ -68,7 +85,7 @@ function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        style={{ width: '100%', background: 'var(--av-cream)', color: 'var(--av-ink)', fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase', padding: '16px', cursor: 'pointer', border: 'none', transition: 'background 0.3s', opacity: loading ? 0.6 : 1 }}
+        style={{ width: '100%', background: 'var(--av-cream)', color: 'var(--av-ink)', fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase', padding: '16px', cursor: loading ? 'not-allowed' : 'pointer', border: 'none', transition: 'background 0.3s', opacity: loading ? 0.6 : 1 }}
       >
         {loading ? 'Entrando...' : 'Entrar →'}
       </button>
@@ -79,9 +96,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--av-black)', color: 'var(--av-cream)', display: 'flex' }}>
-      {/* Left — brand panel */}
       <div style={{ display: 'none', flex: '0 0 50%', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', borderRight: '1px solid rgba(242,231,223,0.06)' }} className="login-left">
-        <div className="sunburst" style={{ width: 80, height: 80, marginBottom: 32, opacity: 0.6 }} />
         <h1 className="wordmark" style={{ fontSize: 'clamp(40px,5vw,72px)', color: 'var(--av-cream)', marginBottom: 12 }}>
           Archivo Vivo
         </h1>
@@ -90,10 +105,8 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {/* Right — form */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(40px,8vw,80px) clamp(24px,5vw,60px)' }}>
         <div style={{ width: '100%', maxWidth: 400 }}>
-          {/* Mobile brand */}
           <div style={{ marginBottom: 48, textAlign: 'center' }}>
             <span className="wordmark" style={{ fontSize: 28, color: 'var(--av-cream)', display: 'block', marginBottom: 6 }}>Archivo Vivo</span>
             <span className="label" style={{ letterSpacing: '0.32em' }}>Ideas · Visión · Legado</span>
@@ -106,7 +119,7 @@ export default function LoginPage() {
             Accede a tu cuenta para ver tus puntos y pedidos.
           </p>
 
-          <Suspense fallback={<div style={{ height: 160, background: 'rgba(242,231,223,0.04)' }} />}>
+          <Suspense fallback={<div style={{ height: 200, background: 'rgba(242,231,223,0.04)' }} />}>
             <LoginForm />
           </Suspense>
 
