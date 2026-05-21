@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
@@ -20,6 +22,16 @@ export default async function AccountPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/auth/login?redirect=/account')
+
+  const { data: roleData } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (roleData?.role === 'admin' || roleData?.role === 'employee') {
+    redirect('/admin')
+  }
 
   const [{ data: profileData }, { data: ledgerData }, { data: ordersData }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),

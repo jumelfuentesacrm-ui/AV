@@ -2,7 +2,7 @@ export interface Profile {
   id: string
   full_name: string | null
   email: string | null
-  role: 'customer' | 'admin'
+  role: 'customer' | 'admin' | 'employee'
   points_balance: number
   created_at: string
 }
@@ -29,6 +29,7 @@ export interface Film {
   release_date: string | null
   duration_minutes: number | null
   featured: boolean
+  order_index: number
   created_at: string
 }
 
@@ -42,6 +43,7 @@ export interface Product {
   images: string[]
   featured: boolean
   active: boolean
+  sku: string | null
   created_at: string
   variants?: ProductVariant[]
 }
@@ -62,8 +64,10 @@ export interface Order {
   total: number
   points_earned: number
   shipping_address: ShippingAddress | null
+  stripe_payment_intent: string | null
   created_at: string
   items?: OrderItem[]
+  profile?: Profile
 }
 
 export interface OrderItem {
@@ -102,4 +106,59 @@ export interface CartItem {
   product: Product
   variant: ProductVariant | null
   quantity: number
+}
+
+export interface PageSection {
+  id: string
+  section_key: string
+  label: string
+  content: Record<string, unknown>
+  order_index: number
+  visible: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface Catalog {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  visible: boolean
+  display_order: number
+  created_at: string
+  products?: CatalogProduct[]
+}
+
+export interface CatalogProduct {
+  id: string
+  catalog_id: string
+  product_id: string
+  display_order: number
+  product?: Product
+}
+
+export interface EmployeePermissions {
+  id: string
+  user_id: string
+  can_edit_prices: boolean
+  can_manage_orders: boolean
+  can_manage_inventory: boolean
+  can_view_analytics: boolean
+  can_edit_site_content: boolean
+  can_process_refunds: boolean
+  updated_at: string
+  profile?: Profile
+}
+
+export interface SiteSetting {
+  id: string
+  key: string
+  value: Record<string, unknown>
+  updated_at: string
+}
+
+export interface NavLink {
+  label: string
+  href: string
 }

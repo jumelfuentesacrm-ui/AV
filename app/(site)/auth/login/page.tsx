@@ -2,19 +2,17 @@
 
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import StarburstLogo from '@/components/ui/StarburstLogo'
 
 function LoginForm() {
-  const [email, setEmail] = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState<string | null>(null)
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') ?? '/account'
-  const supabase = createClient()
+  const redirectTo   = searchParams.get('redirect')
+  const supabase     = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,15 +24,14 @@ function LoginForm() {
       setError('Correo o contraseña incorrectos.')
       setLoading(false)
     } else {
-      router.push(redirect)
-      router.refresh()
+      window.location.href = redirectTo ?? '/account'
     }
   }
 
   return (
-    <form onSubmit={handleLogin} className="space-y-5">
+    <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <label className="block font-body text-xs tracking-widest uppercase text-cream/40 mb-2">
+        <label style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.26em', textTransform: 'uppercase', color: 'var(--av-taupe)', marginBottom: 8 }}>
           Correo Electrónico
         </label>
         <input
@@ -42,12 +39,12 @@ function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full bg-cream/5 border border-cream/10 text-cream placeholder-cream/20 font-body text-sm px-4 py-3 focus:outline-none focus:border-gold transition-colors duration-200"
+          style={{ width: '100%', background: 'rgba(242,231,223,0.06)', border: '1px solid rgba(242,231,223,0.14)', color: 'var(--av-cream)', fontFamily: 'var(--f-sans)', fontSize: 15, padding: '12px 16px', outline: 'none' }}
           placeholder="tu@correo.com"
         />
       </div>
       <div>
-        <label className="block font-body text-xs tracking-widest uppercase text-cream/40 mb-2">
+        <label style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.26em', textTransform: 'uppercase', color: 'var(--av-taupe)', marginBottom: 8 }}>
           Contraseña
         </label>
         <input
@@ -55,13 +52,13 @@ function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full bg-cream/5 border border-cream/10 text-cream placeholder-cream/20 font-body text-sm px-4 py-3 focus:outline-none focus:border-gold transition-colors duration-200"
+          style={{ width: '100%', background: 'rgba(242,231,223,0.06)', border: '1px solid rgba(242,231,223,0.14)', color: 'var(--av-cream)', fontFamily: 'var(--f-sans)', fontSize: 15, padding: '12px 16px', outline: 'none' }}
           placeholder="••••••••"
         />
       </div>
 
       {error && (
-        <p className="font-body text-sm text-red-400 bg-red-900/20 border border-red-900/30 px-4 py-2.5">
+        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.18em', color: '#c64a3b', background: 'rgba(198,74,59,0.1)', border: '1px solid rgba(198,74,59,0.2)', padding: '10px 14px' }}>
           {error}
         </p>
       )}
@@ -69,9 +66,9 @@ function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-cream text-dark font-display font-bold text-sm tracking-widest uppercase py-4 hover:bg-gold transition-colors duration-300 disabled:opacity-60"
+        style={{ width: '100%', background: 'var(--av-cream)', color: 'var(--av-ink)', fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase', padding: '16px', cursor: loading ? 'not-allowed' : 'pointer', border: 'none', transition: 'background 0.3s', opacity: loading ? 0.6 : 1 }}
       >
-        {loading ? 'Entrando...' : 'Entrar'}
+        {loading ? 'Entrando...' : 'Entrar →'}
       </button>
     </form>
   )
@@ -79,53 +76,52 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-dark flex">
-      {/* Left panel — brand */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-16 border-r border-cream/5">
-        <StarburstLogo size={80} color="#FAF5F0" className="mb-8" />
-        <h1 className="font-display font-extrabold text-5xl tracking-widest uppercase text-cream mb-3">
+    <div style={{ minHeight: '100vh', background: 'var(--av-black)', color: 'var(--av-cream)', display: 'flex' }}>
+      <div style={{ display: 'none', flex: '0 0 50%', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', borderRight: '1px solid rgba(242,231,223,0.06)' }} className="login-left">
+        <h1 className="wordmark" style={{ fontSize: 'clamp(40px,5vw,72px)', color: 'var(--av-cream)', marginBottom: 12 }}>
           Archivo Vivo
         </h1>
-        <p className="font-display font-bold text-xl tracking-[0.3em] uppercase text-gold">
+        <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'var(--av-taupe)' }}>
           Ideas · Visión · Legado
         </p>
       </div>
 
-      {/* Right panel — form */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-20">
-        <div className="w-full max-w-md">
-          <div className="lg:hidden flex flex-col items-center mb-12">
-            <StarburstLogo size={48} color="#FAF5F0" className="mb-4" />
-            <h1 className="font-display font-extrabold text-3xl tracking-widest uppercase text-cream">
-              Archivo Vivo
-            </h1>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(40px,8vw,80px) clamp(24px,5vw,60px)' }}>
+        <div style={{ width: '100%', maxWidth: 400 }}>
+          <div style={{ marginBottom: 48, textAlign: 'center' }}>
+            <span className="wordmark" style={{ fontSize: 28, color: 'var(--av-cream)', display: 'block', marginBottom: 6 }}>Archivo Vivo</span>
+            <span className="label" style={{ letterSpacing: '0.32em' }}>Ideas · Visión · Legado</span>
           </div>
 
-          <h2 className="font-display font-extrabold text-3xl tracking-wider uppercase text-cream mb-2">
+          <h2 className="wordmark" style={{ fontSize: 'clamp(32px,4vw,48px)', color: 'var(--av-cream)', marginBottom: 8 }}>
             Iniciar Sesión
           </h2>
-          <p className="font-body text-cream/40 text-sm mb-10">
+          <p style={{ fontFamily: 'var(--f-sans)', fontSize: 14, color: 'var(--av-taupe)', marginBottom: 36 }}>
             Accede a tu cuenta para ver tus puntos y pedidos.
           </p>
 
-          <Suspense fallback={
-            <div className="space-y-5 animate-pulse">
-              <div className="h-12 bg-cream/5 border border-cream/10" />
-              <div className="h-12 bg-cream/5 border border-cream/10" />
-              <div className="h-12 bg-cream/10" />
-            </div>
-          }>
+          <Suspense fallback={<div style={{ height: 200, background: 'rgba(242,231,223,0.04)' }} />}>
             <LoginForm />
           </Suspense>
 
-          <p className="font-body text-sm text-cream/30 mt-8 text-center">
+          <p style={{ fontFamily: 'var(--f-sans)', fontSize: 13, color: 'var(--av-gray)', marginTop: 32, textAlign: 'center' }}>
             ¿No tienes cuenta?{' '}
-            <Link href="/auth/register" className="text-gold hover:text-cream transition-colors duration-200">
+            <Link href="/auth/register" style={{ color: 'var(--av-cream)', textDecoration: 'underline', textUnderlineOffset: 3 }}>
               Regístrate aquí
             </Link>
           </p>
+
+          <div style={{ marginTop: 48, textAlign: 'center' }}>
+            <Link href="/" style={{ fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.26em', textTransform: 'uppercase', color: 'var(--av-gray)', opacity: 0.6 }}>
+              ← Volver al sitio
+            </Link>
+          </div>
         </div>
       </div>
+
+      <style>{`
+        @media (min-width: 1024px) { .login-left { display: flex !important; } }
+      `}</style>
     </div>
   )
 }

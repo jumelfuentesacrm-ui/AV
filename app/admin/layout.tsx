@@ -1,7 +1,20 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import StarburstLogo from '@/components/ui/StarburstLogo'
+
+const NAV_ITEMS = [
+  { href: '/admin',            label: 'Dashboard',      icon: '◈' },
+  { href: '/admin/cms',        label: 'Editor de página', icon: '◧' },
+  { href: '/admin/catalogs',   label: 'Catálogos',      icon: '▦' },
+  { href: '/admin/films',      label: 'Cortometrajes',  icon: '▷' },
+  { href: '/admin/merch',      label: 'Productos',      icon: '◻' },
+  { href: '/admin/orders',     label: 'Pedidos',        icon: '≡' },
+  { href: '/admin/users',      label: 'Usuarios',       icon: '◉' },
+  { href: '/admin/employees',  label: 'Empleados',      icon: '◎' },
+  { href: '/admin/machines',   label: 'Máquinas',       icon: '⊡' },
+  { href: '/admin/analytics',  label: 'Analíticas',     icon: '◈' },
+  { href: '/admin/settings',   label: 'Configuración',  icon: '⚙' },
+]
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
@@ -15,46 +28,39 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .eq('id', user.id)
     .single()
 
-  if (!profile || profile.role !== 'admin') redirect('/')
+  if (!profile || !['admin', 'employee'].includes(profile.role)) redirect('/')
 
   return (
-    <div className="min-h-screen bg-[#F5F0EA] flex">
+    <div style={{ minHeight: '100vh', display: 'flex', background: '#F0EBE5' }}>
       {/* Sidebar */}
-      <aside className="w-60 bg-dark flex-shrink-0 flex flex-col">
-        <div className="p-6 border-b border-cream/10">
-          <Link href="/" className="flex items-center gap-2">
-            <StarburstLogo size={24} color="#FAF5F0" />
-            <span className="font-display font-bold text-sm tracking-widest uppercase text-cream">
-              Archivo Vivo
-            </span>
+      <aside style={{ width: 224, flexShrink: 0, display: 'flex', flexDirection: 'column', background: 'var(--av-black)', borderRight: '1px solid rgba(242,231,223,0.06)' }}>
+        <div style={{ padding: '24px 20px', borderBottom: '1px solid rgba(242,231,223,0.08)' }}>
+          <Link href="/" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span className="wordmark" style={{ fontSize: 15, color: 'var(--av-cream)', letterSpacing: '0.02em' }}>Archivo Vivo</span>
           </Link>
-          <p className="font-body text-xs text-cream/30 tracking-widest uppercase mt-1 ml-8">Admin</p>
+          <span style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'var(--av-gray)', marginTop: 6 }}>
+            {profile.role === 'admin' ? 'Admin Panel' : 'Employee Panel'}
+          </span>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
-          {[
-            { href: '/admin', label: 'Dashboard', icon: '◈' },
-            { href: '/admin/films', label: 'Cortometrajes', icon: '▷' },
-            { href: '/admin/merch', label: 'Productos', icon: '◻' },
-            { href: '/admin/machines', label: 'Máquinas', icon: '⊡' },
-            { href: '/admin/users', label: 'Usuarios', icon: '◉' },
-            { href: '/admin/orders', label: 'Pedidos', icon: '≡' },
-          ].map(({ href, label, icon }) => (
+        <nav style={{ flex: 1, padding: '12px 8px', overflowY: 'auto' }}>
+          {NAV_ITEMS.map(({ href, label, icon }) => (
             <Link
               key={href}
               href={href}
-              className="flex items-center gap-3 px-3 py-2.5 font-body text-sm text-cream/50 hover:text-cream hover:bg-cream/5 transition-colors duration-200 rounded-sm"
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', fontFamily: 'var(--f-sans)', fontSize: 13, color: 'rgba(242,231,223,0.5)', borderRadius: 2, transition: 'color 0.2s, background 0.2s', textDecoration: 'none' }}
+              className="admin-nav-link"
             >
-              <span className="text-gold/60 text-xs w-4">{icon}</span>
+              <span style={{ fontFamily: 'var(--f-mono)', fontSize: 11, color: 'var(--av-taupe)', width: 16 }}>{icon}</span>
               {label}
             </Link>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-cream/10">
+        <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(242,231,223,0.08)' }}>
           <Link
             href="/"
-            className="flex items-center gap-2 font-body text-xs text-cream/30 hover:text-cream/60 transition-colors duration-200 tracking-wider"
+            style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--av-gray)', opacity: 0.7 }}
           >
             ← Volver al sitio
           </Link>
@@ -62,9 +68,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </aside>
 
       {/* Main */}
-      <main className="flex-1 overflow-y-auto">
+      <main style={{ flex: 1, overflowY: 'auto' }}>
         {children}
       </main>
+
+      <style>{`
+        .admin-nav-link:hover { color: rgba(242,231,223,0.9) !important; background: rgba(242,231,223,0.05); }
+      `}</style>
     </div>
   )
 }
