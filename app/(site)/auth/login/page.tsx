@@ -19,12 +19,17 @@ function LoginForm() {
     setLoading(true)
     setError(null)
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setError('Correo o contraseña incorrectos.')
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+      } else {
+        window.location.href = redirectTo ?? '/account'
+      }
+    } catch (err: any) {
+      setError(err?.message ?? 'Error de conexión')
       setLoading(false)
-    } else {
-      window.location.href = redirectTo ?? '/account'
     }
   }
 
