@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 export function createClient() {
@@ -16,5 +17,13 @@ export function createClient() {
         try { cookieStore.set({ name, value: '', ...options }) } catch {}
       },
     },
+  })
+}
+
+export function createServiceClient() {
+  const url         = process.env.NEXT_PUBLIC_SUPABASE_URL     ?? 'https://placeholder.supabase.co'
+  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY    ?? 'placeholder-service-key'
+  return createSupabaseClient(url, serviceRole, {
+    auth: { autoRefreshToken: false, persistSession: false },
   })
 }

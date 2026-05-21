@@ -1,7 +1,7 @@
 'use server'
 
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 export async function loginAction(
   _prev: { error: string | null },
@@ -27,7 +27,8 @@ export async function loginAction(
     redirect(redirectTo)
   }
 
-  const { data: profile } = await supabase
+  const service = createServiceClient()
+  const { data: profile } = await service
     .from('profiles')
     .select('role')
     .eq('id', data.user.id)
