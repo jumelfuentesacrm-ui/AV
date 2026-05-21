@@ -18,14 +18,25 @@ const barlow = Barlow({
 })
 
 export const metadata: Metadata = {
-  title: 'Archivo Vivo — Ideas. Visión. Legado.',
+  title: 'AV — Archivo Vivo',
   description:
-    'Archivo Vivo es una marca puertorriqueña dedicada al cine, la moda y la cultura. Cortometrajes, ropa y máquinas expendedoras.',
-  keywords: ['Puerto Rico', 'cine', 'cortometrajes', 'moda', 'cultura', 'Archivo Vivo'],
+    'Archivo Vivo. Ideas. Visión. Legado. Cine, moda y cultura desde Puerto Rico.',
+  keywords: ['Puerto Rico', 'cine', 'cortometrajes', 'moda', 'cultura', 'Archivo Vivo', 'AV'],
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
   openGraph: {
-    title: 'Archivo Vivo',
+    title: 'AV — Archivo Vivo',
     description: 'Ideas. Visión. Legado.',
     type: 'website',
+    siteName: 'Archivo Vivo',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'AV — Archivo Vivo',
+    description: 'Ideas. Visión. Legado.',
   },
 }
 
