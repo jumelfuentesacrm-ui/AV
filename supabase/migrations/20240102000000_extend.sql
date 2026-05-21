@@ -33,11 +33,13 @@ CREATE TABLE IF NOT EXISTS employee_permissions (
 
 ALTER TABLE employee_permissions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "admin_all_permissions" ON employee_permissions;
 CREATE POLICY "admin_all_permissions" ON employee_permissions
   FOR ALL USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
   );
 
+DROP POLICY IF EXISTS "employee_read_own_permissions" ON employee_permissions;
 CREATE POLICY "employee_read_own_permissions" ON employee_permissions
   FOR SELECT USING (user_id = auth.uid());
 
@@ -57,18 +59,19 @@ CREATE TABLE IF NOT EXISTS page_sections (
 
 ALTER TABLE page_sections ENABLE ROW LEVEL SECURITY;
 
--- Admins full access
+DROP POLICY IF EXISTS "admin_all_sections" ON page_sections;
 CREATE POLICY "admin_all_sections" ON page_sections
   FOR ALL USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
   );
 
--- Employees with site content permission can read/update
+DROP POLICY IF EXISTS "employee_read_sections" ON page_sections;
 CREATE POLICY "employee_read_sections" ON page_sections
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin','employee'))
   );
 
+DROP POLICY IF EXISTS "employee_update_sections" ON page_sections;
 CREATE POLICY "employee_update_sections" ON page_sections
   FOR UPDATE USING (
     EXISTS (
@@ -78,7 +81,7 @@ CREATE POLICY "employee_update_sections" ON page_sections
     )
   );
 
--- Public can read visible sections
+DROP POLICY IF EXISTS "public_read_visible_sections" ON page_sections;
 CREATE POLICY "public_read_visible_sections" ON page_sections
   FOR SELECT USING (visible = true);
 
@@ -97,11 +100,13 @@ CREATE TABLE IF NOT EXISTS catalogs (
 
 ALTER TABLE catalogs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "admin_all_catalogs" ON catalogs;
 CREATE POLICY "admin_all_catalogs" ON catalogs
   FOR ALL USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
   );
 
+DROP POLICY IF EXISTS "public_read_visible_catalogs" ON catalogs;
 CREATE POLICY "public_read_visible_catalogs" ON catalogs
   FOR SELECT USING (visible = true);
 
@@ -118,11 +123,13 @@ CREATE TABLE IF NOT EXISTS catalog_products (
 
 ALTER TABLE catalog_products ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "admin_all_catalog_products" ON catalog_products;
 CREATE POLICY "admin_all_catalog_products" ON catalog_products
   FOR ALL USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
   );
 
+DROP POLICY IF EXISTS "public_read_catalog_products" ON catalog_products;
 CREATE POLICY "public_read_catalog_products" ON catalog_products
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM catalogs WHERE id = catalog_id AND visible = true)
@@ -140,11 +147,13 @@ CREATE TABLE IF NOT EXISTS site_settings (
 
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "admin_all_settings" ON site_settings;
 CREATE POLICY "admin_all_settings" ON site_settings
   FOR ALL USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
   );
 
+DROP POLICY IF EXISTS "public_read_settings" ON site_settings;
 CREATE POLICY "public_read_settings" ON site_settings
   FOR SELECT USING (true);
 
