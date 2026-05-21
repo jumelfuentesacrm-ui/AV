@@ -25,7 +25,7 @@ function AdminLoginForm() {
         setError('Las puertas del archivo permanecen cerradas.')
         setLoading(false)
       } else {
-        window.location.href = '/api/auth/redirect'
+        window.location.href = '/admin'
       }
     } catch (err: any) {
       setError(err?.message ?? 'Error de conexión. Intenta de nuevo.')

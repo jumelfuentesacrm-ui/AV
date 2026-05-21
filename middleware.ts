@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
-const BETA_BYPASS   = ['/access', '/api/access', '/api/auth', '/auth']
+const BETA_BYPASS   = ['/access', '/api/access', '/api/auth', '/auth', '/admin']
 const AUTH_REQUIRED = ['/account', '/admin', '/api/auth/redirect']
 
 export async function middleware(request: NextRequest) {
