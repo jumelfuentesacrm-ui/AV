@@ -1,8 +1,22 @@
 'use client'
 
-import { Suspense, useEffect, useActionState } from 'react'
+import { Suspense } from 'react'
+import { useFormState, useFormStatus } from 'react-dom'
 import { useSearchParams } from 'next/navigation'
 import { adminLoginAction } from './actions'
+
+function SubmitButton() {
+  const { pending } = useFormStatus()
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      style={{ width: '100%', background: 'transparent', color: 'var(--av-cream)', fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', padding: '16px', cursor: pending ? 'not-allowed' : 'pointer', border: '1px solid rgba(242,231,223,0.2)', transition: 'border-color 0.3s, background 0.3s', opacity: pending ? 0.5 : 1 }}
+    >
+      {pending ? 'Verificando...' : 'Abrir el archivo →'}
+    </button>
+  )
+}
 
 function AdminLoginForm() {
   const searchParams = useSearchParams()
@@ -13,7 +27,7 @@ function AdminLoginForm() {
     ? roleParam === 'none' ? 'No existe perfil para esta cuenta.' : `Acceso denegado (rol: ${roleParam ?? 'desconocido'}).`
     : null
 
-  const [state, formAction, pending] = useActionState(adminLoginAction, { error: initialError })
+  const [state, formAction] = useFormState(adminLoginAction, { error: initialError })
 
   return (
     <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%', maxWidth: 360 }}>
@@ -53,13 +67,7 @@ function AdminLoginForm() {
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        style={{ width: '100%', background: 'transparent', color: 'var(--av-cream)', fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase', padding: '16px', cursor: pending ? 'not-allowed' : 'pointer', border: '1px solid rgba(242,231,223,0.2)', transition: 'border-color 0.3s, background 0.3s', opacity: pending ? 0.5 : 1 }}
-      >
-        {pending ? 'Verificando...' : 'Abrir el archivo →'}
-      </button>
+      <SubmitButton />
     </form>
   )
 }

@@ -1,14 +1,28 @@
 'use client'
 
-import { Suspense, useActionState } from 'react'
+import { Suspense } from 'react'
+import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { loginAction } from './actions'
 
+function SubmitButton() {
+  const { pending } = useFormStatus()
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      style={{ width: '100%', background: 'var(--av-cream)', color: 'var(--av-ink)', fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase', padding: '16px', cursor: pending ? 'not-allowed' : 'pointer', border: 'none', transition: 'background 0.3s', opacity: pending ? 0.6 : 1 }}
+    >
+      {pending ? 'Entrando...' : 'Entrar →'}
+    </button>
+  )
+}
+
 function LoginForm() {
   const searchParams = useSearchParams()
   const redirectTo   = searchParams.get('redirect') ?? ''
-  const [state, formAction, pending] = useActionState(loginAction, { error: null })
+  const [state, formAction] = useFormState(loginAction, { error: null })
 
   return (
     <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -45,13 +59,7 @@ function LoginForm() {
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        style={{ width: '100%', background: 'var(--av-cream)', color: 'var(--av-ink)', fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase', padding: '16px', cursor: pending ? 'not-allowed' : 'pointer', border: 'none', transition: 'background 0.3s', opacity: pending ? 0.6 : 1 }}
-      >
-        {pending ? 'Entrando...' : 'Entrar →'}
-      </button>
+      <SubmitButton />
     </form>
   )
 }
