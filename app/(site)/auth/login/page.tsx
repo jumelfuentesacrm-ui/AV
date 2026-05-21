@@ -2,10 +2,12 @@
 
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 function LoginForm() {
+  const router       = useRouter()
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading]   = useState(false)
@@ -20,12 +22,21 @@ function LoginForm() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        setError(error.message)
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      if (signInError || !data.user) {
+        setError(signInError?.message ?? 'Error de conexión')
         setLoading(false)
+        return
+      }
+      const { data: profile } = await supabase
+        .from('profiles').select('role').eq('id', data.user.id).single()
+      const role = profile?.role ?? 'customer'
+      if (redirectTo) {
+        router.push(redirectTo)
+      } else if (role === 'admin' || role === 'employee') {
+        router.push('/admin')
       } else {
-        window.location.href = redirectTo ?? '/api/auth/redirect'
+        router.push('/account')
       }
     } catch (err: any) {
       setError(err?.message ?? 'Error de conexión')

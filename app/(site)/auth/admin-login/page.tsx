@@ -1,15 +1,17 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 function AdminLoginForm() {
+  const router       = useRouter()
   const searchParams = useSearchParams()
   const hasError     = searchParams.get('error') === '1'
-  const role         = searchParams.get('role')
+  const roleParam    = searchParams.get('role')
   const errorMsg     = hasError
-    ? role === 'none' ? 'No existe perfil para esta cuenta.' : `Acceso denegado (rol: ${role ?? 'desconocido'}).`
+    ? roleParam === 'none' ? 'No existe perfil para esta cuenta.' : `Acceso denegado (rol: ${roleParam ?? 'desconocido'}).`
     : null
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
@@ -17,17 +19,14 @@ function AdminLoginForm() {
   const [error, setError]       = useState<string | null>(errorMsg)
   const supabase = createClient()
 
-  // If already logged in as admin/employee, go straight to admin
+  // Auto-redirect if already logged in as admin/employee
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) return
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
+        .from('profiles').select('role').eq('id', user.id).single()
       if (profile?.role === 'admin' || profile?.role === 'employee') {
-        window.location.href = '/admin'
+        router.push('/admin')
       }
     })
   }, [])
@@ -38,28 +37,20 @@ function AdminLoginForm() {
     setError(null)
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-      if (signInError) {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      if (signInError || !data.user) {
         setError('Las puertas del archivo permanecen cerradas.')
         setLoading(false)
         return
       }
-      // Verify role before navigating
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        setError('No se pudo establecer sesión. Intenta de nuevo.')
-        setLoading(false)
-        return
-      }
+
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
+        .from('profiles').select('role').eq('id', data.user.id).single()
+
       if (profile?.role === 'admin' || profile?.role === 'employee') {
-        window.location.href = '/admin'
+        router.push('/admin')
       } else {
-        setError(`Acceso denegado. Tu rol es: ${profile?.role ?? 'ninguno'}.`)
+        setError(`Acceso denegado. Rol actual: ${profile?.role ?? 'ninguno'}.`)
         setLoading(false)
       }
     } catch (err: any) {
@@ -136,7 +127,6 @@ export default function AdminLoginPage() {
       overflow: 'hidden',
     }}>
 
-      {/* Subtle sunburst background */}
       <div className="sunburst-cream" style={{
         position: 'absolute',
         width: '600px',
@@ -148,7 +138,6 @@ export default function AdminLoginPage() {
         transform: 'translate(-50%, -50%)',
       }} />
 
-      {/* Top label */}
       <p style={{
         position: 'absolute', top: 32, left: 0, right: 0, textAlign: 'center',
         fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.4em',
@@ -157,10 +146,7 @@ export default function AdminLoginPage() {
         Archivo Vivo · Acceso Restringido
       </p>
 
-      {/* Main content */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 48, width: '100%', maxWidth: 360 }}>
-
-        {/* Headline */}
         <div style={{ textAlign: 'center' }}>
           <p style={{
             fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.3em',
@@ -178,14 +164,11 @@ export default function AdminLoginPage() {
           </h1>
         </div>
 
-        {/* Form */}
         <Suspense fallback={<div style={{ height: 200 }} />}>
           <AdminLoginForm />
         </Suspense>
-
       </div>
 
-      {/* Bottom label */}
       <p style={{
         position: 'absolute', bottom: 28, left: 0, right: 0, textAlign: 'center',
         fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.3em',
