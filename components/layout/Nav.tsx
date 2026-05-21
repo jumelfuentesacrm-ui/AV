@@ -15,10 +15,12 @@ const SECTIONS = [
   { id: 'contacto',     dark: true  },
 ]
 
+type UserState = { name: string; role: string } | null
+
 export default function Nav() {
   const navRef  = useRef<HTMLElement>(null)
   const router  = useRouter()
-  const [role, setRole]       = useState<string | null>(null)
+  const [user, setUser]       = useState<UserState>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
@@ -48,10 +50,15 @@ export default function Nav() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setLoading(false); return }
-      const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-      setRole(data?.role ?? 'customer')
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) { setUser(null); setLoading(false); return }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, role, email')
+        .eq('id', authUser.id)
+        .single()
+      const name = profile?.full_name || authUser.email?.split('@')[0] || 'Usuario'
+      setUser({ name, role: profile?.role ?? 'customer' })
       setLoading(false)
     }
     load()
@@ -61,12 +68,13 @@ export default function Nav() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    setRole(null)
+    setUser(null)
     router.push('/')
     router.refresh()
   }
 
-  const isAdmin = role === 'admin' || role === 'employee'
+  const isAdmin = user?.role === 'admin' || user?.role === 'employee'
+  const destination = isAdmin ? '/admin' : '/account'
 
   return (
     <nav className="nav" id="nav" ref={navRef}>
@@ -84,17 +92,19 @@ export default function Nav() {
         <a href="#manifiesto" className="nav-manifiesto" data-link="manifiesto">Manifiesto</a>
 
         {!loading && (
-          role ? (
+          user ? (
             <>
-              {isAdmin && (
-                <Link href="/admin" className="nav-login" style={{ marginRight: 8 }}>
-                  Admin
-                </Link>
-              )}
+              <Link href={destination} className="nav-login">
+                {user.name}
+              </Link>
               <button
                 onClick={handleSignOut}
-                className="nav-login"
-                style={{ background: 'none', cursor: 'pointer', border: '1px solid currentColor' }}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontFamily: 'var(--f-mono)', fontSize: 10,
+                  letterSpacing: '0.2em', textTransform: 'uppercase',
+                  color: 'var(--av-gray)', opacity: 0.7, padding: '0 4px',
+                }}
               >
                 Salir
               </button>
@@ -107,17 +117,19 @@ export default function Nav() {
         <a href="#" className="nav-lang">ES&nbsp;/&nbsp;EN</a>
       </div>
 
-      {/* Mobile nav row */}
       <div className="nav-mobile">
         <a href="#episodios">El Archivo</a>
         <a href="#indumentaria">Indumentaria</a>
         <a href="#maquinas">Máquinas</a>
         <a href="#manifiesto">Manifiesto</a>
         <a href="#suscripcion">Suscripción</a>
-        {role ? (
-          <button onClick={handleSignOut} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontFamily: 'inherit', fontSize: 'inherit' }}>
-            Salir
-          </button>
+        {user ? (
+          <>
+            <Link href={destination}>{user.name}</Link>
+            <button onClick={handleSignOut} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontFamily: 'inherit', fontSize: 'inherit' }}>
+              Salir
+            </button>
+          </>
         ) : (
           <Link href="/auth/login">Log In</Link>
         )}
