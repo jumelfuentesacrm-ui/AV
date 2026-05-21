@@ -33,7 +33,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const role = profile?.role ?? 'none'
   if (!['admin', 'employee'].includes(role)) redirect(`/auth/admin-login?error=1&role=${role}`)
 
-  const isAdmin = profile.role === 'admin'
+  const isAdmin = role === 'admin'
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: '#F0EBE5' }}>
