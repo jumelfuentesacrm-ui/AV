@@ -4,23 +4,30 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Film, Product, MachineLocation } from '@/types'
 
+type Content = Record<string, Record<string, string>>
+
 interface Props {
   films: Film[]
   products: Product[]
   machines: MachineLocation[]
+  content?: Content
 }
 
-export default function HomeClient({ films, products, machines }: Props) {
+function g(content: Content | undefined, section: string, field: string, fallback: string): string {
+  return content?.[section]?.[field] || fallback
+}
+
+export default function HomeClient({ films, products, machines, content }: Props) {
   return (
     <>
       <Loader />
       <div className="grain" />
-      <HeroSection />
-      <ManifestoSection />
-      <EpisodiosSection films={films} />
-      <IndumentariaSection products={products} />
-      <MaquinasSection machines={machines} />
-      <SubscribeSection />
+      <HeroSection content={content} />
+      <ManifestoSection content={content} />
+      <EpisodiosSection films={films} content={content} />
+      <IndumentariaSection products={products} content={content} />
+      <MaquinasSection machines={machines} content={content} />
+      <SubscribeSection content={content} />
     </>
   )
 }
@@ -41,11 +48,13 @@ function Loader() {
 /* ============================================================
    HERO
    ============================================================ */
-function HeroSection() {
+function HeroSection({ content }: { content?: Content }) {
   return (
     <header className="hero" id="top">
       <div className="hero-sun sunburst" />
-      <div className="hero-top">Archivo Vivo · Est. MMXXVI · San Juan, PR</div>
+      <div className="hero-top">
+        {g(content, 'hero', 'top_bar', 'Archivo Vivo · Est. MMXXVI · San Juan, PR')}
+      </div>
       <div className="hero-content">
         <div className="hero-rule" />
         <div className="hero-logo-wrap">
@@ -67,19 +76,27 @@ function HeroSection() {
 /* ============================================================
    MANIFESTO
    ============================================================ */
-function ManifestoSection() {
+function ManifestoSection({ content }: { content?: Content }) {
   return (
     <section className="manifesto" id="manifiesto">
       <div className="wrap">
         <div className="label label-bar reveal">— Prólogo · 00 / Manifiesto</div>
         <div className="manifesto-grid" style={{ marginTop: 40 }}>
           <h1 className="reveal d1">
-            Donde el<br />artista se<br />vuelve<br />memoria.
+            {g(content, 'manifesto', 'heading', 'Donde el\nartista se\nvuelve\nmemoria.').split('\n').map((line, i, arr) => (
+              <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+            ))}
           </h1>
           <div className="manifesto-body reveal d2">
-            <p className="lede">Archivo Vivo no es un museo. Es un archivo que respira, hecho de cintas, telas y máquinas.</p>
-            <p>Documentamos en imagen a quienes han moldeado la cultura de la isla, vestimos a quien quiera llevar un retazo de esa memoria en el pecho, y colocamos el archivo en los lugares donde la gente realmente vive — el mall, el lobby, la terminal.</p>
-            <p>Tres capítulos. Una misma idea: lo que se archiva no muere — sigue vivo en el cuerpo de quien lo lleva.</p>
+            <p className="lede">
+              {g(content, 'manifesto', 'lede', 'Archivo Vivo no es un museo. Es un archivo que respira, hecho de cintas, telas y máquinas.')}
+            </p>
+            <p>
+              {g(content, 'manifesto', 'body1', 'Documentamos en imagen a quienes han moldeado la cultura de la isla, vestimos a quien quiera llevar un retazo de esa memoria en el pecho, y colocamos el archivo en los lugares donde la gente realmente vive — el mall, el lobby, la terminal.')}
+            </p>
+            <p>
+              {g(content, 'manifesto', 'body2', 'Tres capítulos. Una misma idea: lo que se archiva no muere — sigue vivo en el cuerpo de quien lo lleva.')}
+            </p>
             <div className="manifesto-sig">
               <span className="ink">Archivo Vivo</span>
               <span className="role">El equipo · San Juan, PR</span>
@@ -102,7 +119,7 @@ const EPISODES = [
   { num: '06', title: 'El último\nensayo',               artist: 'Sujeto · Teatro',   date: 'Feb · 2027', runtime: '9\'30"' },
 ]
 
-function EpisodiosSection({ films }: { films: Film[] }) {
+function EpisodiosSection({ films, content }: { films: Film[]; content?: Content }) {
   return (
     <section className="episodios" id="episodios">
       <div className="wrap">
@@ -115,8 +132,7 @@ function EpisodiosSection({ films }: { films: Film[] }) {
           <div className="chapter-right">
             <span className="label" style={{ color: 'var(--av-taupe)' }}>Episodios de 7 a 10 min</span>
             <p className="body" style={{ color: 'var(--av-taupe)' }}>
-              Retratos en imagen y voz. Cada estación, un artista grande de la isla cuenta su historia —
-              la versión completa vive aquí, la versión corta vive en redes.
+              {g(content, 'episodios', 'chapter_body', 'Retratos en imagen y voz. Cada estación, un artista grande de la isla cuenta su historia — la versión completa vive aquí, la versión corta vive en redes.')}
             </p>
           </div>
         </div>
@@ -137,10 +153,13 @@ function EpisodiosSection({ films }: { films: Film[] }) {
           </div>
           <div className="featured-text reveal d1">
             <span className="label label-bar" style={{ color: 'var(--av-taupe)' }}>— Episodio en curso</span>
-            <h3>Lo que la<br />palma nunca<br />olvidó.</h3>
+            <h3>
+              {g(content, 'episodios', 'featured_title', 'Lo que la palma nunca olvidó.').split('\n').map((line, i, arr) => (
+                <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+              ))}
+            </h3>
             <p className="desc">
-              Un retrato íntimo del narrador que tatuó el español caribeño en la memoria de tres generaciones.
-              Caminamos su barrio, escuchamos su silencio, y descubrimos por qué su voz no le pertenece solamente a él.
+              {g(content, 'episodios', 'featured_desc', 'Un retrato íntimo del narrador que tatuó el español caribeño en la memoria de tres generaciones. Caminamos su barrio, escuchamos su silencio, y descubrimos por qué su voz no le pertenece solamente a él.')}
             </p>
             <dl className="stats">
               <div><dt>Duración</dt><dd>8&apos;42&quot;</dd></div>
@@ -201,8 +220,7 @@ const VOL01_TEES = [
   { name: 'Tee\nAV Legado', sub: 'Cotton · Vol.01', price: '$70' },
 ]
 
-function VolCarousel({ id, title, meta, items }: {
-  id: string
+function VolCarousel({ title, meta, items }: {
   title: string
   meta: string
   items: { name: string; sub: string; price: string }[]
@@ -258,7 +276,7 @@ function VolCarousel({ id, title, meta, items }: {
   )
 }
 
-function IndumentariaSection({ products }: { products: Product[] }) {
+function IndumentariaSection({ products, content }: { products: Product[]; content?: Content }) {
   return (
     <section className="indumentaria" id="indumentaria">
       <div className="wrap">
@@ -271,13 +289,11 @@ function IndumentariaSection({ products }: { products: Product[] }) {
           <div className="chapter-right">
             <span className="label">Vol. 01 · Cinco piezas</span>
             <p className="body">
-              Camisas, T-shirts de vestir y piezas pensadas para reuniones, citas y la vida diaria
-              de quien se viste con intención. Cada pieza lleva el bolsillo en <em>tela AV</em>.
+              {g(content, 'indumentaria', 'chapter_body', 'Camisas, T-shirts de vestir y piezas pensadas para reuniones, citas y la vida diaria de quien se viste con intención. Cada pieza lleva el bolsillo en tela AV.')}
             </p>
           </div>
         </div>
 
-        {/* Fabric feature + statement */}
         <div className="indum-layout">
           <div className="fabric-feature reveal">
             <div style={{
@@ -291,11 +307,16 @@ function IndumentariaSection({ products }: { products: Product[] }) {
           </div>
           <div className="fabric-stmt reveal d1">
             <span className="label label-bar">— La tela del archivo</span>
-            <h3>Ropa que<br />carga<br />memoria.</h3>
-            <p className="lede">Cada pieza documenta. Cada costuras es un argumento.</p>
+            <h3>
+              {g(content, 'indumentaria', 'statement_title', 'Ropa que carga memoria.').split('\n').map((line, i, arr) => (
+                <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+              ))}
+            </h3>
+            <p className="lede">
+              {g(content, 'indumentaria', 'statement_lede', 'Cada pieza documenta. Cada costura es un argumento.')}
+            </p>
             <p>
-              Diseñamos para quienes se visten con intención. Camisas de vestir, T-shirts de autor
-              y piezas de temporada — todas con el bolsillo de identificación AV bordado en tela propia.
+              {g(content, 'indumentaria', 'statement_body', 'Diseñamos para quienes se visten con intención. Camisas de vestir, T-shirts de autor y piezas de temporada — todas con el bolsillo de identificación AV bordado en tela propia.')}
             </p>
             <div style={{ marginTop: 22 }}>
               <Link href="/merch" className="btn btn-fill">
@@ -305,11 +326,9 @@ function IndumentariaSection({ products }: { products: Product[] }) {
           </div>
         </div>
 
-        {/* Volume carousels */}
-        <VolCarousel id="camisas" title="Vol. 01 — Camisas" meta="Lino · Oxford · Cuadro" items={VOL01_CAMISAS} />
-        <VolCarousel id="tees"    title="Vol. 01 — Tees"    meta="Cotton · Peso medio"    items={VOL01_TEES} />
+        <VolCarousel title="Vol. 01 — Camisas" meta="Lino · Oxford · Cuadro" items={VOL01_CAMISAS} />
+        <VolCarousel title="Vol. 01 — Tees"    meta="Cotton · Peso medio"    items={VOL01_TEES} />
 
-        {/* Próximamente */}
         <div className="vol-block reveal">
           <div className="vol-head">
             <div>
@@ -333,7 +352,6 @@ function IndumentariaSection({ products }: { products: Product[] }) {
           </div>
         </div>
 
-        {/* Atelier strip */}
         <div className="atelier reveal">
           {[
             { title: 'Tela AV', desc: 'Cada prenda lleva el bolsillo identificatorio bordado en tela de la casa.' },
@@ -363,7 +381,7 @@ const DEFAULT_LOCATIONS = [
   { id: '5', mall_name: 'SJU Terminal A',     city: 'Carolina',  active: false, address: null, photo_url: null, hours: null, created_at: '' },
 ] as MachineLocation[]
 
-function MaquinasSection({ machines }: { machines: MachineLocation[] }) {
+function MaquinasSection({ machines, content }: { machines: MachineLocation[]; content?: Content }) {
   const locs = machines.length ? machines : DEFAULT_LOCATIONS
 
   return (
@@ -379,8 +397,7 @@ function MaquinasSection({ machines }: { machines: MachineLocation[] }) {
           <div className="chapter-right">
             <span className="label" style={{ color: 'var(--av-taupe)' }}>Red de cinco unidades</span>
             <p className="body" style={{ color: 'var(--av-taupe)' }}>
-              Una red de vending culturales en los puntos donde la isla circula — malls, lobbies, terminales.
-              Snack, agua, refresco. Y el archivo viviendo en silencio al lado.
+              {g(content, 'maquinas', 'chapter_body', 'Una red de vending culturales en los puntos donde la isla circula — malls, lobbies, terminales. Snack, agua, refresco. Y el archivo viviendo en silencio al lado.')}
             </p>
           </div>
         </div>
@@ -390,7 +407,6 @@ function MaquinasSection({ machines }: { machines: MachineLocation[] }) {
             <span className="tag tl">XJT · Modelo A1 · 220V</span>
             <span className="crosshair" />
             <span className="tag br">Prototipo Vol.01 · 1 de 5</span>
-            {/* Machine visual placeholder */}
             <div style={{
               width: '55%', aspectRatio: '2/5',
               background: 'linear-gradient(180deg,#2a2624 0%,#1a1512 100%)',
@@ -412,11 +428,13 @@ function MaquinasSection({ machines }: { machines: MachineLocation[] }) {
 
           <div className="maq-copy reveal d1">
             <span className="label label-bar" style={{ color: 'var(--av-taupe)' }}>— Mientras esperas el agua</span>
-            <h3>El archivo<br />también vive<br />en el mall.</h3>
+            <h3>
+              {g(content, 'maquinas', 'copy_title', 'El archivo también vive en el mall.').split('\n').map((line, i, arr) => (
+                <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+              ))}
+            </h3>
             <p>
-              La pantalla integrada reproduce los episodios del archivo en bucle, junto al inventario
-              habitual de una vending. La idea: que mientras esperas tu agua, conozcas a alguien que
-              cambió la cultura de la isla.
+              {g(content, 'maquinas', 'copy_body', 'La pantalla integrada reproduce los episodios del archivo en bucle, junto al inventario habitual de una vending. La idea: que mientras esperas tu agua, conozcas a alguien que cambió la cultura de la isla.')}
             </p>
             <div className="locations">
               {locs.slice(0, 5).map((loc, i) => (
@@ -445,7 +463,7 @@ function MaquinasSection({ machines }: { machines: MachineLocation[] }) {
 /* ============================================================
    SUBSCRIBE
    ============================================================ */
-function SubscribeSection() {
+function SubscribeSection({ content }: { content?: Content }) {
   return (
     <section className="subscribe" id="suscripcion">
       <div className="subscribe-sun sunburst" />
@@ -455,11 +473,12 @@ function SubscribeSection() {
           Boletín del archivo
         </span>
         <h2 className="reveal d1" style={{ marginTop: 28 }}>
-          Mantente cerca<br />del archivo.
+          {g(content, 'subscribe', 'heading', 'Mantente cerca del archivo.').split('\n').map((line, i, arr) => (
+            <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+          ))}
         </h2>
         <p className="reveal d2">
-          Un correo cada estación: el próximo episodio, drops nuevos de indumentaria, y dónde encontrar
-          la siguiente máquina. Sin ruido — la frecuencia del archivo.
+          {g(content, 'subscribe', 'body', 'Un correo cada estación: el próximo episodio, drops nuevos de indumentaria, y dónde encontrar la siguiente máquina. Sin ruido — la frecuencia del archivo.')}
         </p>
         <SubscribeForm />
         <div className="social-row reveal d4">
