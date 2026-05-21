@@ -23,6 +23,16 @@ export default async function AccountPage() {
 
   if (!user) redirect('/auth/login?redirect=/account')
 
+  const { data: roleData } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (roleData?.role === 'admin' || roleData?.role === 'employee') {
+    redirect('/admin')
+  }
+
   const [{ data: profileData }, { data: ledgerData }, { data: ordersData }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('points_ledger').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),

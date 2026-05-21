@@ -19,38 +19,12 @@ function LoginForm() {
     setLoading(true)
     setError(null)
 
-    try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-
-      if (signInError) {
-        setError(signInError.message === 'Email not confirmed'
-          ? 'Debes confirmar tu correo antes de entrar. Revisa tu bandeja de entrada.'
-          : 'Correo o contraseña incorrectos.')
-        setLoading(false)
-        return
-      }
-
-      // If middleware sent us here with a specific destination, honor it
-      if (redirectTo) {
-        window.location.href = redirectTo
-        return
-      }
-
-      // Route by role
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/account'; return }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-      const role = profile?.role ?? 'customer'
-      window.location.href = (role === 'admin' || role === 'employee') ? '/admin' : '/account'
-    } catch (err) {
-      setError('Error inesperado. Intenta de nuevo.')
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      setError('Correo o contraseña incorrectos.')
       setLoading(false)
+    } else {
+      window.location.href = redirectTo ?? '/account'
     }
   }
 
