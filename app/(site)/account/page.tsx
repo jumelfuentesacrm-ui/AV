@@ -111,9 +111,11 @@ export default async function AccountPage() {
                   <div>
                     <dt className="font-body text-xs text-charcoal/40 tracking-widest uppercase">Miembro desde</dt>
                     <dd className="font-body text-sm text-charcoal">
-                      {new Date(profile?.created_at ?? '').toLocaleDateString('es-PR', {
-                        year: 'numeric', month: 'long',
-                      })}
+                      {(() => {
+                        const raw = profile?.created_at ?? user.created_at
+                        const d = new Date(raw)
+                        return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-PR', { year: 'numeric', month: 'long' })
+                      })()}
                     </dd>
                   </div>
                 </dl>
