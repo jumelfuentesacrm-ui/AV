@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Profile } from '@/types'
 
 const SECTIONS = [
   { id: 'top',          dark: false },
@@ -17,13 +17,14 @@ const SECTIONS = [
 
 export default function Nav() {
   const navRef  = useRef<HTMLElement>(null)
-  const [profile, setProfile] = useState<Profile | null>(null)
+  const router  = useRouter()
+  const [role, setRole]       = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
     const nav = navRef.current
     if (!nav) return
-
     function updateNav() {
       if (!nav) return
       const y = window.scrollY
@@ -40,7 +41,6 @@ export default function Nav() {
         a.classList.toggle('active', a.dataset.link === cur.id)
       })
     }
-
     window.addEventListener('scroll', updateNav, { passive: true })
     updateNav()
     return () => window.removeEventListener('scroll', updateNav)
@@ -49,14 +49,24 @@ export default function Nav() {
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      if (data) setProfile(data as Profile)
+      if (!user) { setLoading(false); return }
+      const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+      setRole(data?.role ?? 'customer')
+      setLoading(false)
     }
     load()
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => load())
     return () => subscription.unsubscribe()
   }, [supabase])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    setRole(null)
+    router.push('/')
+    router.refresh()
+  }
+
+  const isAdmin = role === 'admin' || role === 'employee'
 
   return (
     <nav className="nav" id="nav" ref={navRef}>
@@ -72,7 +82,28 @@ export default function Nav() {
 
       <div className="nav-right">
         <a href="#manifiesto" className="nav-manifiesto" data-link="manifiesto">Manifiesto</a>
-        <Link href="/auth/login" className="nav-login">Log In</Link>
+
+        {!loading && (
+          role ? (
+            <>
+              {isAdmin && (
+                <Link href="/admin" className="nav-login" style={{ marginRight: 8 }}>
+                  Admin
+                </Link>
+              )}
+              <button
+                onClick={handleSignOut}
+                className="nav-login"
+                style={{ background: 'none', cursor: 'pointer', border: '1px solid currentColor' }}
+              >
+                Salir
+              </button>
+            </>
+          ) : (
+            <Link href="/auth/login" className="nav-login">Log In</Link>
+          )
+        )}
+
         <a href="#" className="nav-lang">ES&nbsp;/&nbsp;EN</a>
       </div>
 
@@ -83,6 +114,13 @@ export default function Nav() {
         <a href="#maquinas">Máquinas</a>
         <a href="#manifiesto">Manifiesto</a>
         <a href="#suscripcion">Suscripción</a>
+        {role ? (
+          <button onClick={handleSignOut} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontFamily: 'inherit', fontSize: 'inherit' }}>
+            Salir
+          </button>
+        ) : (
+          <Link href="/auth/login">Log In</Link>
+        )}
       </div>
     </nav>
   )
