@@ -24,8 +24,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!user) redirect('/auth/login?redirect=/admin')
 
-  // TEMP: allow any logged-in user to see admin
-  // TODO: restore role check after confirming admin UI works
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile || !['admin', 'employee'].includes(profile.role)) redirect('/')
+
+  const isAdmin = profile.role === 'admin'
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: '#F0EBE5' }}>
@@ -36,7 +43,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <span className="wordmark" style={{ fontSize: 15, color: 'var(--av-cream)', letterSpacing: '0.02em' }}>Archivo Vivo</span>
           </Link>
           <span style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'var(--av-gray)', marginTop: 6 }}>
-            Admin Panel
+            {isAdmin ? 'Admin Panel' : 'Employee Panel'}
           </span>
         </div>
 
