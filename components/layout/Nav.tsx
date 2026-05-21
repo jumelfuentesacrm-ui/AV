@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 const SECTIONS = [
@@ -19,7 +18,6 @@ type UserState = { name: string; role: string } | null
 
 export default function Nav() {
   const navRef  = useRef<HTMLElement>(null)
-  const router  = useRouter()
   const [user, setUser] = useState<UserState>(null)
   const supabase = createClient()
 
@@ -64,13 +62,6 @@ export default function Nav() {
     return () => subscription.unsubscribe()
   }, [supabase])
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
-    router.push('/')
-    router.refresh()
-  }
-
   const isAdmin = user?.role === 'admin' || user?.role === 'employee'
   const destination = isAdmin ? '/admin' : '/account'
 
@@ -90,22 +81,7 @@ export default function Nav() {
         <a href="#manifiesto" className="nav-manifiesto" data-link="manifiesto">Manifiesto</a>
 
         {user ? (
-          <>
-            <Link href={destination} className="nav-login">
-              {user.name}
-            </Link>
-            <button
-              onClick={handleSignOut}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontFamily: 'var(--f-mono)', fontSize: 10,
-                letterSpacing: '0.2em', textTransform: 'uppercase',
-                color: 'var(--av-gray)', opacity: 0.7, padding: '0 4px',
-              }}
-            >
-              Salir
-            </button>
-          </>
+          <Link href={destination} className="nav-login">{user.name}</Link>
         ) : (
           <Link href="/auth/login" className="nav-login">Log In</Link>
         )}
@@ -120,16 +96,10 @@ export default function Nav() {
         <a href="#manifiesto">Manifiesto</a>
         <a href="#suscripcion">Suscripción</a>
         {user ? (
-          <>
-            <Link href={destination}>{user.name}</Link>
-            <button onClick={handleSignOut} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontFamily: 'inherit', fontSize: 'inherit' }}>
-              Salir
-            </button>
-          </>
+          <Link href={destination}>{user.name}</Link>
         ) : (
           <Link href="/auth/login">Log In</Link>
         )}
-
       </div>
     </nav>
   )
