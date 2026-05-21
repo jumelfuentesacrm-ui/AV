@@ -1,14 +1,15 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const origin = request.nextUrl.origin
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return NextResponse.redirect(new URL('/auth/login', process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'))
+    return NextResponse.redirect(`${origin}/auth/login`)
   }
 
   const { data: profile } = await supabase
@@ -20,5 +21,5 @@ export async function GET() {
   const role = profile?.role ?? 'customer'
   const dest = (role === 'admin' || role === 'employee') ? '/admin' : '/account'
 
-  return NextResponse.redirect(new URL(dest, process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'))
+  return NextResponse.redirect(`${origin}${dest}`)
 }
