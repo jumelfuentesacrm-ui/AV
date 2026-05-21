@@ -17,6 +17,31 @@ ALTER TABLE films ADD COLUMN IF NOT EXISTS order_index int DEFAULT 0;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS sku text;
 
 -- ============================================================
+-- EMPLOYEE PERMISSIONS (must exist before page_sections policies)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS employee_permissions (
+  id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id               uuid REFERENCES profiles(id) ON DELETE CASCADE UNIQUE,
+  can_edit_prices       boolean DEFAULT false,
+  can_manage_orders     boolean DEFAULT false,
+  can_manage_inventory  boolean DEFAULT false,
+  can_view_analytics    boolean DEFAULT false,
+  can_edit_site_content boolean DEFAULT false,
+  can_process_refunds   boolean DEFAULT false,
+  updated_at            timestamptz DEFAULT now()
+);
+
+ALTER TABLE employee_permissions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "admin_all_permissions" ON employee_permissions
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  );
+
+CREATE POLICY "employee_read_own_permissions" ON employee_permissions
+  FOR SELECT USING (user_id = auth.uid());
+
+-- ============================================================
 -- PAGE SECTIONS (CMS)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS page_sections (
@@ -102,31 +127,6 @@ CREATE POLICY "public_read_catalog_products" ON catalog_products
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM catalogs WHERE id = catalog_id AND visible = true)
   );
-
--- ============================================================
--- EMPLOYEE PERMISSIONS
--- ============================================================
-CREATE TABLE IF NOT EXISTS employee_permissions (
-  id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id               uuid REFERENCES profiles(id) ON DELETE CASCADE UNIQUE,
-  can_edit_prices       boolean DEFAULT false,
-  can_manage_orders     boolean DEFAULT false,
-  can_manage_inventory  boolean DEFAULT false,
-  can_view_analytics    boolean DEFAULT false,
-  can_edit_site_content boolean DEFAULT false,
-  can_process_refunds   boolean DEFAULT false,
-  updated_at            timestamptz DEFAULT now()
-);
-
-ALTER TABLE employee_permissions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "admin_all_permissions" ON employee_permissions
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-  );
-
-CREATE POLICY "employee_read_own_permissions" ON employee_permissions
-  FOR SELECT USING (user_id = auth.uid());
 
 -- ============================================================
 -- SITE SETTINGS
