@@ -1,24 +1,24 @@
 -- ============================================================
 -- ARCHIVO VIVO — Extended Schema v2
+-- Run this in Supabase SQL Editor
 -- ============================================================
 
--- Extend profiles role check to include employee
+-- ============================================================
+-- STEP 1: ALTER EXISTING TABLES
+-- ============================================================
+
 ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
 ALTER TABLE profiles ADD CONSTRAINT profiles_role_check
   CHECK (role IN ('customer', 'admin', 'employee'));
 
--- Add stripe_payment_intent to orders
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_payment_intent text;
-
--- Add order_index to films
-ALTER TABLE films ADD COLUMN IF NOT EXISTS order_index int DEFAULT 0;
-
--- Add sku to products
+ALTER TABLE orders  ADD COLUMN IF NOT EXISTS stripe_payment_intent text;
+ALTER TABLE films   ADD COLUMN IF NOT EXISTS order_index int DEFAULT 0;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS sku text;
 
 -- ============================================================
--- EMPLOYEE PERMISSIONS (must exist before page_sections policies)
+-- STEP 2: CREATE NEW TABLES (dependency order)
 -- ============================================================
+
 CREATE TABLE IF NOT EXISTS employee_permissions (
   id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id               uuid REFERENCES profiles(id) ON DELETE CASCADE UNIQUE,
@@ -31,63 +31,17 @@ CREATE TABLE IF NOT EXISTS employee_permissions (
   updated_at            timestamptz DEFAULT now()
 );
 
-ALTER TABLE employee_permissions ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "admin_all_permissions" ON employee_permissions;
-CREATE POLICY "admin_all_permissions" ON employee_permissions
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-  );
-
-DROP POLICY IF EXISTS "employee_read_own_permissions" ON employee_permissions;
-CREATE POLICY "employee_read_own_permissions" ON employee_permissions
-  FOR SELECT USING (user_id = auth.uid());
-
--- ============================================================
--- PAGE SECTIONS (CMS)
--- ============================================================
 CREATE TABLE IF NOT EXISTS page_sections (
-  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  section_key  text UNIQUE NOT NULL,
-  label        text NOT NULL,
-  content      jsonb DEFAULT '{}',
-  order_index  int  DEFAULT 0,
-  visible      boolean DEFAULT true,
-  created_at   timestamptz DEFAULT now(),
-  updated_at   timestamptz DEFAULT now()
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  section_key text UNIQUE NOT NULL,
+  label       text NOT NULL,
+  content     jsonb DEFAULT '{}',
+  order_index int DEFAULT 0,
+  visible     boolean DEFAULT true,
+  created_at  timestamptz DEFAULT now(),
+  updated_at  timestamptz DEFAULT now()
 );
 
-ALTER TABLE page_sections ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "admin_all_sections" ON page_sections;
-CREATE POLICY "admin_all_sections" ON page_sections
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-  );
-
-DROP POLICY IF EXISTS "employee_read_sections" ON page_sections;
-CREATE POLICY "employee_read_sections" ON page_sections
-  FOR SELECT USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin','employee'))
-  );
-
-DROP POLICY IF EXISTS "employee_update_sections" ON page_sections;
-CREATE POLICY "employee_update_sections" ON page_sections
-  FOR UPDATE USING (
-    EXISTS (
-      SELECT 1 FROM profiles p
-      JOIN employee_permissions ep ON ep.user_id = p.id
-      WHERE p.id = auth.uid() AND p.role = 'employee' AND ep.can_edit_site_content = true
-    )
-  );
-
-DROP POLICY IF EXISTS "public_read_visible_sections" ON page_sections;
-CREATE POLICY "public_read_visible_sections" ON page_sections
-  FOR SELECT USING (visible = true);
-
--- ============================================================
--- CATALOGS
--- ============================================================
 CREATE TABLE IF NOT EXISTS catalogs (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name          text NOT NULL,
@@ -98,21 +52,6 @@ CREATE TABLE IF NOT EXISTS catalogs (
   created_at    timestamptz DEFAULT now()
 );
 
-ALTER TABLE catalogs ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "admin_all_catalogs" ON catalogs;
-CREATE POLICY "admin_all_catalogs" ON catalogs
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-  );
-
-DROP POLICY IF EXISTS "public_read_visible_catalogs" ON catalogs;
-CREATE POLICY "public_read_visible_catalogs" ON catalogs
-  FOR SELECT USING (visible = true);
-
--- ============================================================
--- CATALOG PRODUCTS (junction)
--- ============================================================
 CREATE TABLE IF NOT EXISTS catalog_products (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   catalog_id    uuid REFERENCES catalogs(id) ON DELETE CASCADE,
@@ -121,23 +60,6 @@ CREATE TABLE IF NOT EXISTS catalog_products (
   UNIQUE (catalog_id, product_id)
 );
 
-ALTER TABLE catalog_products ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "admin_all_catalog_products" ON catalog_products;
-CREATE POLICY "admin_all_catalog_products" ON catalog_products
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-  );
-
-DROP POLICY IF EXISTS "public_read_catalog_products" ON catalog_products;
-CREATE POLICY "public_read_catalog_products" ON catalog_products
-  FOR SELECT USING (
-    EXISTS (SELECT 1 FROM catalogs WHERE id = catalog_id AND visible = true)
-  );
-
--- ============================================================
--- SITE SETTINGS
--- ============================================================
 CREATE TABLE IF NOT EXISTS site_settings (
   id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   key        text UNIQUE NOT NULL,
@@ -145,21 +67,131 @@ CREATE TABLE IF NOT EXISTS site_settings (
   updated_at timestamptz DEFAULT now()
 );
 
-ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
+-- ============================================================
+-- STEP 3: ENABLE RLS ON ALL NEW TABLES
+-- ============================================================
 
-DROP POLICY IF EXISTS "admin_all_settings" ON site_settings;
-CREATE POLICY "admin_all_settings" ON site_settings
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+ALTER TABLE employee_permissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE page_sections        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE catalogs             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE catalog_products     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE site_settings        ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================
+-- STEP 4: POLICIES — NEW TABLES
+-- ============================================================
+
+-- employee_permissions
+DROP POLICY IF EXISTS "admin_all_permissions"           ON employee_permissions;
+DROP POLICY IF EXISTS "employee_read_own_permissions"   ON employee_permissions;
+CREATE POLICY "admin_all_permissions" ON employee_permissions
+  FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+CREATE POLICY "employee_read_own_permissions" ON employee_permissions
+  FOR SELECT USING (user_id = auth.uid());
+
+-- page_sections
+DROP POLICY IF EXISTS "admin_all_sections"          ON page_sections;
+DROP POLICY IF EXISTS "employee_read_sections"      ON page_sections;
+DROP POLICY IF EXISTS "employee_update_sections"    ON page_sections;
+DROP POLICY IF EXISTS "public_read_visible_sections" ON page_sections;
+CREATE POLICY "admin_all_sections" ON page_sections
+  FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+CREATE POLICY "employee_read_sections" ON page_sections
+  FOR SELECT USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin','employee')));
+CREATE POLICY "employee_update_sections" ON page_sections
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      JOIN employee_permissions ep ON ep.user_id = p.id
+      WHERE p.id = auth.uid() AND p.role = 'employee' AND ep.can_edit_site_content = true
+    )
   );
+CREATE POLICY "public_read_visible_sections" ON page_sections
+  FOR SELECT USING (visible = true);
 
+-- catalogs
+DROP POLICY IF EXISTS "admin_all_catalogs"          ON catalogs;
+DROP POLICY IF EXISTS "public_read_visible_catalogs" ON catalogs;
+CREATE POLICY "admin_all_catalogs" ON catalogs
+  FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+CREATE POLICY "public_read_visible_catalogs" ON catalogs
+  FOR SELECT USING (visible = true);
+
+-- catalog_products
+DROP POLICY IF EXISTS "admin_all_catalog_products"  ON catalog_products;
+DROP POLICY IF EXISTS "public_read_catalog_products" ON catalog_products;
+CREATE POLICY "admin_all_catalog_products" ON catalog_products
+  FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+CREATE POLICY "public_read_catalog_products" ON catalog_products
+  FOR SELECT USING (EXISTS (SELECT 1 FROM catalogs WHERE id = catalog_id AND visible = true));
+
+-- site_settings
+DROP POLICY IF EXISTS "admin_all_settings"  ON site_settings;
 DROP POLICY IF EXISTS "public_read_settings" ON site_settings;
+CREATE POLICY "admin_all_settings" ON site_settings
+  FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
 CREATE POLICY "public_read_settings" ON site_settings
   FOR SELECT USING (true);
 
 -- ============================================================
--- DEFAULT PAGE SECTIONS
+-- STEP 5: POLICIES — EXISTING TABLES (fill gaps)
 -- ============================================================
+
+-- films
+DROP POLICY IF EXISTS "public_read_films" ON films;
+DROP POLICY IF EXISTS "admin_all_films"   ON films;
+CREATE POLICY "public_read_films" ON films
+  FOR SELECT USING (status IN ('released','upcoming'));
+CREATE POLICY "admin_all_films" ON films
+  FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin','employee')));
+
+-- products
+DROP POLICY IF EXISTS "public_read_products" ON products;
+DROP POLICY IF EXISTS "admin_all_products"   ON products;
+CREATE POLICY "public_read_products" ON products
+  FOR SELECT USING (active = true);
+CREATE POLICY "admin_all_products" ON products
+  FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin','employee')));
+
+-- product_variants
+DROP POLICY IF EXISTS "public_read_variants" ON product_variants;
+DROP POLICY IF EXISTS "admin_all_variants"   ON product_variants;
+CREATE POLICY "public_read_variants" ON product_variants
+  FOR SELECT USING (true);
+CREATE POLICY "admin_all_variants" ON product_variants
+  FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin','employee')));
+
+-- profiles
+DROP POLICY IF EXISTS "users_read_own_profile"   ON profiles;
+DROP POLICY IF EXISTS "users_update_own_profile" ON profiles;
+DROP POLICY IF EXISTS "admin_all_profiles"       ON profiles;
+CREATE POLICY "users_read_own_profile" ON profiles
+  FOR SELECT USING (id = auth.uid());
+CREATE POLICY "users_update_own_profile" ON profiles
+  FOR UPDATE USING (id = auth.uid());
+CREATE POLICY "admin_all_profiles" ON profiles
+  FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+
+-- orders
+DROP POLICY IF EXISTS "users_read_own_orders" ON orders;
+DROP POLICY IF EXISTS "admin_all_orders"      ON orders;
+CREATE POLICY "users_read_own_orders" ON orders
+  FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "admin_all_orders" ON orders
+  FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin','employee')));
+
+-- machine_locations
+DROP POLICY IF EXISTS "public_read_machines" ON machine_locations;
+DROP POLICY IF EXISTS "admin_all_machines"   ON machine_locations;
+CREATE POLICY "public_read_machines" ON machine_locations
+  FOR SELECT USING (active = true);
+CREATE POLICY "admin_all_machines" ON machine_locations
+  FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+
+-- ============================================================
+-- STEP 6: SEED DATA
+-- ============================================================
+
 INSERT INTO page_sections (section_key, label, content, order_index, visible) VALUES
   ('hero', 'Hero', '{
     "headline": "Archivo Vivo",
@@ -218,28 +250,25 @@ INSERT INTO page_sections (section_key, label, content, order_index, visible) VA
   }'::jsonb, 5, true)
 ON CONFLICT (section_key) DO NOTHING;
 
--- ============================================================
--- DEFAULT SITE SETTINGS
--- ============================================================
 INSERT INTO site_settings (key, value) VALUES
   ('theme', '{
     "cream": "#f2e7df",
-    "ink": "#343133",
+    "ink":   "#343133",
     "black": "#1a1815",
     "taupe": "#c8bfb9",
-    "gray": "#737373",
+    "gray":  "#737373",
     "white": "#ffffff"
   }'::jsonb),
   ('nav_links', '[
-    {"label": "El Archivo",    "href": "#episodios"},
-    {"label": "Indumentaria",  "href": "#indumentaria"},
-    {"label": "Máquinas",      "href": "#maquinas"},
-    {"label": "Manifiesto",    "href": "#manifiesto"}
+    {"label": "El Archivo",   "href": "#episodios"},
+    {"label": "Indumentaria", "href": "#indumentaria"},
+    {"label": "Máquinas",     "href": "#maquinas"},
+    {"label": "Manifiesto",   "href": "#manifiesto"}
   ]'::jsonb),
   ('footer', '{
     "copyright": "© MMXXVI · Archivo Vivo · All rights reserved",
-    "tagline": "Ideas. Visión. Legado.",
-    "version": "v01 · San Juan, PR",
+    "tagline":   "Ideas. Visión. Legado.",
+    "version":   "v01 · San Juan, PR",
     "social": [
       {"platform": "Instagram", "href": "#"},
       {"platform": "TikTok",    "href": "#"},
@@ -247,77 +276,3 @@ INSERT INTO site_settings (key, value) VALUES
     ]
   }'::jsonb)
 ON CONFLICT (key) DO NOTHING;
-
--- ============================================================
--- RLS POLICIES (existing tables — fill gaps)
--- ============================================================
-
--- Films: public can read released/upcoming
-DROP POLICY IF EXISTS "public_read_films" ON films;
-CREATE POLICY "public_read_films" ON films
-  FOR SELECT USING (status IN ('released','upcoming'));
-
-DROP POLICY IF EXISTS "admin_all_films" ON films;
-CREATE POLICY "admin_all_films" ON films
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin','employee'))
-  );
-
--- Products: public read active
-DROP POLICY IF EXISTS "public_read_products" ON products;
-CREATE POLICY "public_read_products" ON products
-  FOR SELECT USING (active = true);
-
-DROP POLICY IF EXISTS "admin_all_products" ON products;
-CREATE POLICY "admin_all_products" ON products
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin','employee'))
-  );
-
--- Product variants: public read
-DROP POLICY IF EXISTS "public_read_variants" ON product_variants;
-CREATE POLICY "public_read_variants" ON product_variants
-  FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "admin_all_variants" ON product_variants;
-CREATE POLICY "admin_all_variants" ON product_variants
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin','employee'))
-  );
-
--- Profiles: users read own, admins read all
-DROP POLICY IF EXISTS "users_read_own_profile" ON profiles;
-CREATE POLICY "users_read_own_profile" ON profiles
-  FOR SELECT USING (id = auth.uid());
-
-DROP POLICY IF EXISTS "users_update_own_profile" ON profiles;
-CREATE POLICY "users_update_own_profile" ON profiles
-  FOR UPDATE USING (id = auth.uid());
-
-DROP POLICY IF EXISTS "admin_all_profiles" ON profiles;
-CREATE POLICY "admin_all_profiles" ON profiles
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-  );
-
--- Orders: users read own, admins read all
-DROP POLICY IF EXISTS "users_read_own_orders" ON orders;
-CREATE POLICY "users_read_own_orders" ON orders
-  FOR SELECT USING (user_id = auth.uid());
-
-DROP POLICY IF EXISTS "admin_all_orders" ON orders;
-CREATE POLICY "admin_all_orders" ON orders
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin','employee'))
-  );
-
--- Machine locations: public read active
-DROP POLICY IF EXISTS "public_read_machines" ON machine_locations;
-CREATE POLICY "public_read_machines" ON machine_locations
-  FOR SELECT USING (active = true);
-
-DROP POLICY IF EXISTS "admin_all_machines" ON machine_locations;
-CREATE POLICY "admin_all_machines" ON machine_locations
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-  );
