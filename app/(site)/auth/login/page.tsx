@@ -94,7 +94,7 @@ export default function LoginPage() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(40px,8vw,80px) clamp(24px,5vw,60px)' }}>
         <div style={{ width: '100%', maxWidth: 400 }}>
           <div style={{ marginBottom: 48, textAlign: 'center' }}>
-            <Link href="/auth/login?redirect=/admin" style={{ textDecoration: 'none' }}>
+            <Link href="/auth/admin-login" style={{ textDecoration: 'none' }}>
               <span className="wordmark" style={{ fontSize: 28, color: 'var(--av-cream)', display: 'block', marginBottom: 6 }}>Archivo Vivo</span>
             </Link>
             <span className="label" style={{ letterSpacing: '0.32em' }}>Ideas · Visión · Legado</span>
