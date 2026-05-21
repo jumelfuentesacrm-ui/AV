@@ -1,59 +1,26 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useActionState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { loginAction } from './actions'
 
 function LoginForm() {
-  const router       = useRouter()
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState<string | null>(null)
   const searchParams = useSearchParams()
-  const redirectTo   = searchParams.get('redirect')
-  const supabase     = createClient()
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-      if (signInError || !data.user) {
-        setError(signInError?.message ?? 'Error de conexión')
-        setLoading(false)
-        return
-      }
-      const { data: profile } = await supabase
-        .from('profiles').select('role').eq('id', data.user.id).single()
-      const role = profile?.role ?? 'customer'
-      if (redirectTo) {
-        router.push(redirectTo)
-      } else if (role === 'admin' || role === 'employee') {
-        router.push('/admin')
-      } else {
-        router.push('/account')
-      }
-    } catch (err: any) {
-      setError(err?.message ?? 'Error de conexión')
-      setLoading(false)
-    }
-  }
+  const redirectTo   = searchParams.get('redirect') ?? ''
+  const [state, formAction, pending] = useActionState(loginAction, { error: null })
 
   return (
-    <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <input type="hidden" name="redirectTo" value={redirectTo} />
+
       <div>
         <label style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: 10, letterSpacing: '0.26em', textTransform: 'uppercase', color: 'var(--av-taupe)', marginBottom: 8 }}>
           Correo Electrónico
         </label>
         <input
           type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          name="email"
           required
           style={{ width: '100%', background: 'rgba(242,231,223,0.06)', border: '1px solid rgba(242,231,223,0.14)', color: 'var(--av-cream)', fontFamily: 'var(--f-sans)', fontSize: 15, padding: '12px 16px', outline: 'none' }}
           placeholder="tu@correo.com"
@@ -65,26 +32,25 @@ function LoginForm() {
         </label>
         <input
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          name="password"
           required
           style={{ width: '100%', background: 'rgba(242,231,223,0.06)', border: '1px solid rgba(242,231,223,0.14)', color: 'var(--av-cream)', fontFamily: 'var(--f-sans)', fontSize: 15, padding: '12px 16px', outline: 'none' }}
           placeholder="••••••••"
         />
       </div>
 
-      {error && (
+      {state?.error && (
         <p style={{ fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.18em', color: '#c64a3b', background: 'rgba(198,74,59,0.1)', border: '1px solid rgba(198,74,59,0.2)', padding: '10px 14px' }}>
-          {error}
+          {state.error}
         </p>
       )}
 
       <button
         type="submit"
-        disabled={loading}
-        style={{ width: '100%', background: 'var(--av-cream)', color: 'var(--av-ink)', fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase', padding: '16px', cursor: loading ? 'not-allowed' : 'pointer', border: 'none', transition: 'background 0.3s', opacity: loading ? 0.6 : 1 }}
+        disabled={pending}
+        style={{ width: '100%', background: 'var(--av-cream)', color: 'var(--av-ink)', fontFamily: 'var(--f-mono)', fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase', padding: '16px', cursor: pending ? 'not-allowed' : 'pointer', border: 'none', transition: 'background 0.3s', opacity: pending ? 0.6 : 1 }}
       >
-        {loading ? 'Entrando...' : 'Entrar →'}
+        {pending ? 'Entrando...' : 'Entrar →'}
       </button>
     </form>
   )
