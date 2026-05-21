@@ -1,22 +1,36 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 function AdminLoginForm() {
   const searchParams = useSearchParams()
-  const redirectTo   = searchParams.get('redirect') ?? '/admin'
   const hasError     = searchParams.get('error') === '1'
+  const role         = searchParams.get('role')
+  const errorMsg     = hasError
+    ? role === 'none' ? 'No existe perfil para esta cuenta.' : `Acceso denegado (rol: ${role ?? 'desconocido'}).`
+    : null
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading]   = useState(false)
-  const role = searchParams.get('role')
-  const errorMsg = hasError
-    ? role === 'none' ? 'No existe perfil para esta cuenta.' : `Rol actual: ${role}. Se requiere admin.`
-    : null
   const [error, setError]       = useState<string | null>(errorMsg)
-  const supabase     = createClient()
+  const supabase = createClient()
+
+  // If already logged in as admin/employee, go straight to admin
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single()
+      if (profile?.role === 'admin' || profile?.role === 'employee') {
+        window.location.href = '/admin'
+      }
+    })
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,8 +42,25 @@ function AdminLoginForm() {
       if (signInError) {
         setError('Las puertas del archivo permanecen cerradas.')
         setLoading(false)
-      } else {
+        return
+      }
+      // Verify role before navigating
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setError('No se pudo establecer sesión. Intenta de nuevo.')
+        setLoading(false)
+        return
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single()
+      if (profile?.role === 'admin' || profile?.role === 'employee') {
         window.location.href = '/admin'
+      } else {
+        setError(`Acceso denegado. Tu rol es: ${profile?.role ?? 'ninguno'}.`)
+        setLoading(false)
       }
     } catch (err: any) {
       setError(err?.message ?? 'Error de conexión. Intenta de nuevo.')
