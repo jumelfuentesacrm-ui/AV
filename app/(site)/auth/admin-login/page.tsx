@@ -11,7 +11,11 @@ function AdminLoginForm() {
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState<string | null>(hasError ? 'No tienes acceso al archivo.' : null)
+  const role = searchParams.get('role')
+  const errorMsg = hasError
+    ? role === 'none' ? 'No existe perfil para esta cuenta.' : `Rol actual: ${role}. Se requiere admin.`
+    : null
+  const [error, setError]       = useState<string | null>(errorMsg)
   const supabase     = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
