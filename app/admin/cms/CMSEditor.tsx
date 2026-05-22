@@ -199,6 +199,8 @@ function SectionEditor({
   isActive,
   activeField,
   cardRef,
+  onLiveUpdate,
+  onSaved,
 }: {
   section: PageSection
   isFirst: boolean
@@ -206,6 +208,8 @@ function SectionEditor({
   isActive: boolean
   activeField: string | null
   cardRef: (el: HTMLDivElement | null) => void
+  onLiveUpdate: (section: string, field: string, value: string) => void
+  onSaved: () => void
 }) {
   const [isPending, startTransition] = useTransition()
   const [saved, setSaved] = useState(false)
@@ -253,6 +257,7 @@ function SectionEditor({
       try {
         await updateSectionContent(section.id, label, fieldValues)
         setSaved(true)
+        onSaved()
         setTimeout(() => setSaved(false), 2500)
       } catch (err) {
         setSaveError(err instanceof Error ? err.message : 'Error al guardar')
@@ -365,6 +370,7 @@ function SectionEditor({
                   rows={3}
                   style={inputStyle(true)}
                   ref={el => { fieldRefs.current[field] = el }}
+                  onChange={e => onLiveUpdate(section.section_key, field, e.target.value)}
                 />
               ) : (
                 <input
@@ -372,6 +378,7 @@ function SectionEditor({
                   defaultValue={content[field] ?? ''}
                   style={inputStyle()}
                   ref={el => { fieldRefs.current[field] = el }}
+                  onChange={e => onLiveUpdate(section.section_key, field, e.target.value)}
                 />
               )}
             </div>
@@ -604,7 +611,14 @@ export default function CMSEditor({ sections }: { sections: PageSection[] }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productsLoaded])
 
-  // After iframe loads, inject click interceptors (same-origin)
+  // Send a live text update into the iframe DOM without reloading
+  const sendLiveUpdate = useCallback((sectionKey: string, field: string, value: string) => {
+    const iframe = iframeRef.current
+    if (!iframe?.contentWindow) return
+    iframe.contentWindow.postMessage({ av_cms_update: { section: sectionKey, field, value } }, '*')
+  }, [])
+
+  // After iframe loads, inject click interceptors + live-update listener (same-origin)
   const onIframeLoad = useCallback(() => {
     const iframe = iframeRef.current
     if (!iframe?.contentDocument) return
@@ -629,6 +643,20 @@ export default function CMSEditor({ sections }: { sections: PageSection[] }) {
       [data-cms-section] { position: relative; }
     `
     doc.head.appendChild(style)
+
+    // Inject live-update listener: parent posts av_cms_update → update DOM textContent instantly
+    const liveScript = doc.createElement('script')
+    liveScript.textContent = `
+      (function() {
+        window.addEventListener('message', function(e) {
+          if (!e.data || !e.data.av_cms_update) return;
+          var u = e.data.av_cms_update;
+          var els = document.querySelectorAll('[data-cms-s="' + u.section + '"][data-cms-f="' + u.field + '"]');
+          els.forEach(function(el) { el.textContent = u.value || ''; });
+        });
+      })();
+    `
+    doc.head.appendChild(liveScript)
 
     // Field-level click handlers (including product slots)
     const fieldEls = doc.querySelectorAll<HTMLElement>('[data-cms-s][data-cms-f]')
@@ -777,6 +805,8 @@ export default function CMSEditor({ sections }: { sections: PageSection[] }) {
                 isActive={activeKey === section.section_key}
                 activeField={activeKey === section.section_key ? activeField : null}
                 cardRef={el => { cardRefs.current[section.section_key] = el }}
+                onLiveUpdate={sendLiveUpdate}
+                onSaved={reloadIframe}
               />
             ))
           )}
