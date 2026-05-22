@@ -220,10 +220,13 @@ const VOL01_TEES = [
   { name: 'Tee\nAV Legado', sub: 'Cotton · Vol.01', price: '$70' },
 ]
 
-function VolCarousel({ title, meta, items }: {
+function VolCarousel({ title, meta, items, slotPrefix, slotIds, allProducts }: {
   title: string
   meta: string
   items: { name: string; sub: string; price: string }[]
+  slotPrefix?: string
+  slotIds?: (string | null)[]
+  allProducts?: Product[]
 }) {
   const trackRef = useRef<HTMLDivElement>(null)
 
@@ -234,6 +237,21 @@ function VolCarousel({ title, meta, items }: {
     const w = (card?.offsetWidth ?? 280) + 20
     track.scrollBy({ left: dir * w * 2, behavior: 'smooth' })
   }
+
+  const displayItems = items.map((item, i) => {
+    if (slotPrefix && slotIds && allProducts) {
+      const pid = slotIds[i] ?? null
+      if (pid) {
+        const p = allProducts.find(pr => pr.id === pid)
+        if (p) return {
+          id: p.id, slug: p.slug,
+          name: p.name, sub: `${p.category === 'shirt' ? 'Camisa' : p.category === 'tshirt' ? 'Tee' : 'Pieza'} · Vol.01`,
+          price: `$${p.price.toFixed(0)}`, image: p.images?.[0] ?? null,
+        }
+      }
+    }
+    return { id: null as string | null, slug: null as string | null, name: item.name, sub: item.sub, price: item.price, image: null as string | null }
+  })
 
   return (
     <div className="vol-block reveal">
@@ -256,13 +274,18 @@ function VolCarousel({ title, meta, items }: {
         </div>
       </div>
       <div className="vol-track" ref={trackRef}>
-        {items.map((item, i) => (
-          <Link href="/merch" key={i} className="vol-card">
+        {displayItems.map((item, i) => (
+          <Link
+            href={item.slug ? `/merch/${item.slug}` : '/merch'}
+            key={i}
+            className="vol-card"
+            {...(slotPrefix ? { 'data-cms-s': 'indumentaria', 'data-cms-f': 'product_slot', 'data-cms-slot': `${slotPrefix}_${i}` } : {})}
+          >
             <div className="vol-card-img">
-              <div style={{
-                width: '100%', height: '100%',
-                background: `linear-gradient(${135 + i * 20}deg, #2a221a ${i * 10}%, #3d2e1f 100%)`,
-              }} />
+              {item.image
+                ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                : <div style={{ width: '100%', height: '100%', background: `linear-gradient(${135 + i * 20}deg, #2a221a ${i * 10}%, #3d2e1f 100%)` }} />
+              }
             </div>
             <div className="vol-card-body">
               <div className="vol-card-name" style={{ whiteSpace: 'pre-line' }}>{item.name}</div>
@@ -276,7 +299,10 @@ function VolCarousel({ title, meta, items }: {
   )
 }
 
-function IndumentariaSection({ products, content }: { products: Product[]; content?: Content }) {
+function IndumentariaSection({ products, content }: { products: Product[]; content?: Content & { indumentaria?: Record<string, unknown> } }) {
+  const slots = ((content?.indumentaria?.product_slots ?? {}) as Record<string, string | null>)
+  const camisasSlots = [0, 1, 2, 3].map(i => slots[`camisas_${i}`] ?? null)
+  const teesSlots    = [0, 1, 2, 3].map(i => slots[`tees_${i}`]    ?? null)
   return (
     <section className="indumentaria" id="indumentaria">
       <div className="wrap">
@@ -326,8 +352,8 @@ function IndumentariaSection({ products, content }: { products: Product[]; conte
           </div>
         </div>
 
-        <VolCarousel title="Vol. 01 — Camisas" meta="Lino · Oxford · Cuadro" items={VOL01_CAMISAS} />
-        <VolCarousel title="Vol. 01 — Tees"    meta="Cotton · Peso medio"    items={VOL01_TEES} />
+        <VolCarousel title="Vol. 01 — Camisas" meta="Lino · Oxford · Cuadro" items={VOL01_CAMISAS} slotPrefix="camisas" slotIds={camisasSlots} allProducts={products} />
+        <VolCarousel title="Vol. 01 — Tees"    meta="Cotton · Peso medio"    items={VOL01_TEES}    slotPrefix="tees"    slotIds={teesSlots}    allProducts={products} />
 
         <div className="vol-block reveal">
           <div className="vol-head">

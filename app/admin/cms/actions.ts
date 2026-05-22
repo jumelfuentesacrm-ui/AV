@@ -54,3 +54,23 @@ export async function updateSectionContent(
   await supabase.from('page_sections').update({ label, content: updated }).eq('id', id)
   revalidatePath('/')
 }
+
+export async function assignProductSlot(
+  sectionId: string,
+  slotKey: string,
+  productId: string | null
+) {
+  const supabase = createClient()
+  const { data: existing } = await supabase
+    .from('page_sections')
+    .select('content')
+    .eq('id', sectionId)
+    .single()
+  const current = (existing?.content as Record<string, unknown>) ?? {}
+  const currentSlots = (current.product_slots as Record<string, string | null>) ?? {}
+  await supabase
+    .from('page_sections')
+    .update({ content: { ...current, product_slots: { ...currentSlots, [slotKey]: productId } } })
+    .eq('id', sectionId)
+  revalidatePath('/')
+}

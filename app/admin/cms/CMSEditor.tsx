@@ -2,12 +2,13 @@
 
 import { useRef, useState, useTransition, useCallback, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import type { PageSection } from '@/types'
+import type { PageSection, Product } from '@/types'
 import {
   toggleSectionVisible,
   moveSectionUp,
   moveSectionDown,
   updateSectionContent,
+  assignProductSlot,
 } from './actions'
 
 // Maps home-page section IDs → CMS section_keys
@@ -379,25 +380,184 @@ function SectionEditor({
   )
 }
 
+// ── TagSVG ─────────────────────────────────────────────────────────────────────
+function TagSVG() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A870" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
+      <line x1="7" y1="7" x2="7.01" y2="7"/>
+    </svg>
+  )
+}
+
+// ── ProductPicker ──────────────────────────────────────────────────────────────
+function ProductPicker({
+  activeSlot,
+  sectionId,
+  currentSlots,
+  products,
+  onAssign,
+  onBack,
+}: {
+  activeSlot: string
+  sectionId: string | null
+  currentSlots: Record<string, string | null>
+  products: Product[]
+  onAssign: (slotKey: string, productId: string | null) => void
+  onBack: () => void
+}) {
+  const [isPending, startTransition] = useTransition()
+  const currentProductId = currentSlots[activeSlot] ?? null
+
+  const slotParts = activeSlot.split('_')
+  const slotType = slotParts[0] === 'camisas' ? 'Camisas' : slotParts[0] === 'tees' ? 'Tees' : slotParts[0]
+  const slotNum = Number(slotParts[slotParts.length - 1]) + 1
+  const slotLabel = `${slotType} — Slot ${slotNum}`
+
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F7F4F1' }}>
+      {/* Header */}
+      <div style={{
+        padding: '0 16px',
+        height: 36,
+        background: '#fff',
+        borderBottom: '1px solid rgba(52,49,51,0.09)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        flexShrink: 0,
+      }}>
+        <button
+          onClick={onBack}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(52,49,51,0.45)', fontSize: 16, padding: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}
+          title="Volver"
+        >←</button>
+        <TagSVG />
+        <div style={{ flex: 1 }}>
+          <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#1a1815' }}>
+            Catálogo
+          </span>
+          <span style={{ fontSize: 10, color: 'rgba(52,49,51,0.4)', marginLeft: 8 }}>{slotLabel}</span>
+        </div>
+        {currentProductId && (
+          <button
+            onClick={() => startTransition(() => onAssign(activeSlot, null))}
+            disabled={isPending}
+            style={{
+              fontSize: 9, fontFamily: 'monospace', letterSpacing: '0.08em', textTransform: 'uppercase',
+              color: '#c64a3b', background: 'none',
+              border: '1px solid rgba(198,74,59,0.3)', padding: '3px 8px',
+              cursor: 'pointer', borderRadius: 2,
+            }}
+          >
+            Quitar
+          </button>
+        )}
+      </div>
+
+      {/* Grid */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
+        {products.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '3rem 0', color: 'rgba(52,49,51,0.35)', fontSize: 12 }}>
+            Cargando productos…
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {products.map(product => {
+              const isSelected = product.id === currentProductId
+              return (
+                <button
+                  key={product.id}
+                  onClick={() => startTransition(() => onAssign(activeSlot, product.id))}
+                  disabled={isPending}
+                  style={{
+                    background: '#fff',
+                    border: isSelected ? '2px solid #C9A870' : '1px solid rgba(52,49,51,0.1)',
+                    borderRadius: 2,
+                    padding: 0,
+                    cursor: isPending ? 'wait' : 'pointer',
+                    textAlign: 'left',
+                    overflow: 'hidden',
+                    boxShadow: isSelected ? '0 0 0 3px rgba(201,168,112,0.12)' : 'none',
+                    transition: 'border-color 0.15s, box-shadow 0.15s',
+                    opacity: isPending ? 0.65 : 1,
+                  }}
+                >
+                  <div style={{ aspectRatio: '4/3', background: '#2a221a', overflow: 'hidden', position: 'relative' }}>
+                    {product.images?.[0] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={product.images[0]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#2a221a,#3d2e1f)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontSize: 8, fontFamily: 'monospace', color: 'rgba(242,231,223,0.3)', letterSpacing: '0.1em' }}>SIN FOTO</span>
+                      </div>
+                    )}
+                    {isSelected && (
+                      <div style={{ position: 'absolute', top: 4, right: 4, background: '#C9A870', color: '#fff', fontSize: 8, fontFamily: 'monospace', padding: '2px 5px', borderRadius: 2, letterSpacing: '0.08em' }}>
+                        ✓
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ padding: '8px 10px' }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#1a1815', lineHeight: 1.3, marginBottom: 2 }}>{product.name}</div>
+                    <div style={{ fontSize: 10, color: 'rgba(52,49,51,0.45)' }}>${product.price.toFixed(0)}</div>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── CMSEditor (main) ──────────────────────────────────────────────────────────
 export default function CMSEditor({ sections }: { sections: PageSection[] }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [activeKey, setActiveKey] = useState<string | null>(null)
   const [activeField, setActiveField] = useState<string | null>(null)
+  const [activeSlot, setActiveSlot] = useState<string | null>(null)
+  const [view, setView] = useState<'sections' | 'picker'>('sections')
   const [iframeReady, setIframeReady] = useState(false)
   const [, startTransition] = useTransition()
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
+  // Products for the picker
+  const [products, setProducts] = useState<Product[]>([])
+  const [productsLoaded, setProductsLoaded] = useState(false)
+
+  // Get current slot assignments from indumentaria section
+  const indumentariaSection = sections.find(s => s.section_key === 'indumentaria')
+  const currentSlots = ((indumentariaSection?.content as Record<string, unknown>)?.product_slots ?? {}) as Record<string, string | null>
+
   // Listen for postMessage from iframe
   useEffect(() => {
     function onMessage(e: MessageEvent) {
-      // Field-level click
       if (e.data?.av_cms_click) {
-        const { section, field } = e.data.av_cms_click as { section: string; field: string }
+        const { section, field, slot } = e.data.av_cms_click as { section: string; field: string; slot?: string }
         setActiveKey(section)
         setActiveField(field)
-        const card = cardRefs.current[section]
-        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        // Product slot → open picker
+        if (field === 'product_slot' && slot) {
+          setActiveSlot(slot)
+          setView('picker')
+          if (!productsLoaded) {
+            supabaseBrowser
+              .from('products')
+              .select('id,name,slug,price,images,category,active')
+              .eq('active', true)
+              .order('name')
+              .then(({ data }) => {
+                setProducts((data as Product[]) ?? [])
+                setProductsLoaded(true)
+              })
+          }
+        } else {
+          setView('sections')
+          const card = cardRefs.current[section]
+          if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        }
         return
       }
       // Section-level click (fallback)
@@ -405,13 +565,15 @@ export default function CMSEditor({ sections }: { sections: PageSection[] }) {
         const key = e.data.av_cms_section as string
         setActiveKey(key)
         setActiveField(null)
+        setView('sections')
         const card = cardRefs.current[key]
         if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
       }
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productsLoaded])
 
   // After iframe loads, inject click interceptors (same-origin)
   const onIframeLoad = useCallback(() => {
@@ -439,16 +601,19 @@ export default function CMSEditor({ sections }: { sections: PageSection[] }) {
     `
     doc.head.appendChild(style)
 
-    // Field-level click handlers
+    // Field-level click handlers (including product slots)
     const fieldEls = doc.querySelectorAll<HTMLElement>('[data-cms-s][data-cms-f]')
     fieldEls.forEach(el => {
       el.addEventListener('click', (ev) => {
         ev.preventDefault()
         ev.stopPropagation()
-        window.parent.postMessage(
-          { av_cms_click: { section: el.getAttribute('data-cms-s'), field: el.getAttribute('data-cms-f') } },
-          '*'
-        )
+        window.parent.postMessage({
+          av_cms_click: {
+            section: el.getAttribute('data-cms-s'),
+            field: el.getAttribute('data-cms-f'),
+            slot: el.getAttribute('data-cms-slot') ?? undefined,
+          }
+        }, '*')
       }, { capture: true })
     })
 
@@ -525,8 +690,25 @@ export default function CMSEditor({ sections }: { sections: PageSection[] }) {
         />
       </div>
 
-      {/* Right: section editors */}
-      <div style={{ flex: 1, overflowY: 'auto', background: '#F7F4F1' }}>
+      {/* Right: section editors OR product picker */}
+      <div style={{ flex: 1, overflow: 'hidden', background: '#F7F4F1', display: 'flex', flexDirection: 'column' }}>
+        {view === 'picker' && activeSlot ? (
+          <ProductPicker
+            activeSlot={activeSlot}
+            sectionId={indumentariaSection?.id ?? null}
+            currentSlots={currentSlots}
+            products={products}
+            onBack={() => { setView('sections'); setActiveSlot(null) }}
+            onAssign={(slotKey, productId) => {
+              if (!indumentariaSection?.id) return
+              startTransition(async () => {
+                await assignProductSlot(indumentariaSection.id, slotKey, productId)
+                reloadIframe()
+              })
+            }}
+          />
+        ) : (
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
         <div style={{
           position: 'sticky',
@@ -539,6 +721,7 @@ export default function CMSEditor({ sections }: { sections: PageSection[] }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           height: 36,
+          flexShrink: 0,
         }}>
           <div>
             <span style={{ fontWeight: 700, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#1a1815' }}>
@@ -569,6 +752,8 @@ export default function CMSEditor({ sections }: { sections: PageSection[] }) {
             ))
           )}
         </div>
+        </div>
+        )}
       </div>
     </div>
   )
