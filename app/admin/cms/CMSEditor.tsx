@@ -23,22 +23,39 @@ const ID_TO_KEY: Record<string, string> = {
 
 // Which content fields each section supports
 const SECTION_FIELDS: Record<string, string[]> = {
-  hero:          ['image_url', 'title', 'subtitle', 'button_text', 'button_href'],
-  manifesto:     ['title', 'subtitle', 'body'],
-  episodios:     ['image_url', 'title', 'subtitle'],
-  indumentaria:  ['image_url', 'title', 'subtitle'],
-  maquinas:      ['image_url', 'title', 'subtitle', 'body'],
-  subscribe:     ['title', 'subtitle', 'button_text', 'button_href'],
+  hero:          ['image_url', 'top_bar', 'tagline'],
+  manifesto:     ['heading', 'lede', 'body1', 'body2'],
+  episodios:     ['image_url', 'chapter_title', 'chapter_body', 'featured_title', 'featured_desc'],
+  indumentaria:  ['image_url', 'chapter_title', 'chapter_body', 'statement_title', 'statement_lede', 'statement_body'],
+  maquinas:      ['image_url', 'chapter_title', 'chapter_body', 'copy_title', 'copy_body'],
+  subscribe:     ['heading', 'body'],
 }
 
 const FIELD_LABELS: Record<string, string> = {
-  image_url:   'Imagen de sección',
-  title:       'Título',
-  subtitle:    'Subtítulo',
-  body:        'Texto principal',
-  button_text: 'Texto del botón',
-  button_href: 'URL del botón',
+  image_url:       'Imagen de sección',
+  top_bar:         'Barra superior',
+  tagline:         'Tagline',
+  heading:         'Título principal',
+  lede:            'Entradilla',
+  body:            'Texto principal',
+  body1:           'Párrafo 1',
+  body2:           'Párrafo 2',
+  chapter_title:   'Título capítulo',
+  chapter_body:    'Texto capítulo',
+  featured_title:  'Título episodio',
+  featured_desc:   'Descripción episodio',
+  statement_title: 'Título declaración',
+  statement_lede:  'Entradilla declaración',
+  statement_body:  'Texto declaración',
+  copy_title:      'Título copy',
+  copy_body:       'Texto copy',
 }
+
+const MULTILINE_FIELDS = new Set([
+  'body', 'body1', 'body2', 'lede',
+  'chapter_body', 'featured_desc',
+  'statement_lede', 'statement_body', 'copy_body',
+])
 
 // ── Supabase browser client (for image uploads) ──────────────────────────────
 const supabaseBrowser = createClient(
@@ -334,7 +351,7 @@ function SectionEditor({
                   value={imageValues[field] ?? ''}
                   onChange={url => setImageValues(prev => ({ ...prev, [field]: url }))}
                 />
-              ) : field === 'body' ? (
+              ) : MULTILINE_FIELDS.has(field) ? (
                 <textarea
                   name={field}
                   defaultValue={content[field] ?? ''}

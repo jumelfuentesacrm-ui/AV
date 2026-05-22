@@ -58,10 +58,10 @@ function HeroSection({ content }: { content?: Content }) {
       <div className="hero-content">
         <div className="hero-rule" />
         <div className="hero-logo-wrap">
-          <span className="hero-logo-text wordmark" data-cms-s="hero" data-cms-f="title">Archivo Vivo</span>
+          <span className="hero-logo-text wordmark">Archivo Vivo</span>
         </div>
-        <div className="hero-tagline">
-          Ideas <i /> Visión <i /> Legado
+        <div className="hero-tagline" data-cms-s="hero" data-cms-f="tagline">
+          {g(content, 'hero', 'tagline', 'Ideas · Visión · Legado')}
         </div>
       </div>
       <div className="hero-foot">
@@ -91,10 +91,10 @@ function ManifestoSection({ content }: { content?: Content }) {
             <p className="lede" data-cms-s="manifesto" data-cms-f="lede">
               {g(content, 'manifesto', 'lede', 'Archivo Vivo no es un museo. Es un archivo que respira, hecho de cintas, telas y máquinas.')}
             </p>
-            <p>
+            <p data-cms-s="manifesto" data-cms-f="body1">
               {g(content, 'manifesto', 'body1', 'Documentamos en imagen a quienes han moldeado la cultura de la isla, vestimos a quien quiera llevar un retazo de esa memoria en el pecho, y colocamos el archivo en los lugares donde la gente realmente vive — el mall, el lobby, la terminal.')}
             </p>
-            <p>
+            <p data-cms-s="manifesto" data-cms-f="body2">
               {g(content, 'manifesto', 'body2', 'Tres capítulos. Una misma idea: lo que se archiva no muere — sigue vivo en el cuerpo de quien lo lleva.')}
             </p>
             <div className="manifesto-sig">
@@ -126,12 +126,14 @@ function EpisodiosSection({ films, content }: { films: Film[]; content?: Content
         <div className="chapter reveal" style={{ borderColor: 'rgba(242,231,223,0.18)' }}>
           <div className="chapter-left">
             <span className="label label-bar" style={{ color: 'var(--av-taupe)' }}>— Capítulo 01</span>
-            <h2>El Archivo</h2>
+            <h2 data-cms-s="episodios" data-cms-f="chapter_title">
+              {g(content, 'episodios', 'chapter_title', 'El Archivo')}
+            </h2>
           </div>
           <div className="chapter-num" style={{ color: 'var(--av-cream)' }}>01</div>
           <div className="chapter-right">
             <span className="label" style={{ color: 'var(--av-taupe)' }}>Episodios de 7 a 10 min</span>
-            <p className="body" style={{ color: 'var(--av-taupe)' }}>
+            <p className="body" style={{ color: 'var(--av-taupe)' }} data-cms-s="episodios" data-cms-f="chapter_body">
               {g(content, 'episodios', 'chapter_body', 'Retratos en imagen y voz. Cada estación, un artista grande de la isla cuenta su historia — la versión completa vive aquí, la versión corta vive en redes.')}
             </p>
           </div>
@@ -153,12 +155,12 @@ function EpisodiosSection({ films, content }: { films: Film[]; content?: Content
           </div>
           <div className="featured-text reveal d1">
             <span className="label label-bar" style={{ color: 'var(--av-taupe)' }}>— Episodio en curso</span>
-            <h3>
+            <h3 data-cms-s="episodios" data-cms-f="featured_title">
               {g(content, 'episodios', 'featured_title', 'Lo que la palma nunca olvidó.').split('\n').map((line, i, arr) => (
                 <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
               ))}
             </h3>
-            <p className="desc">
+            <p className="desc" data-cms-s="episodios" data-cms-f="featured_desc">
               {g(content, 'episodios', 'featured_desc', 'Un retrato íntimo del narrador que tatuó el español caribeño en la memoria de tres generaciones. Caminamos su barrio, escuchamos su silencio, y descubrimos por qué su voz no le pertenece solamente a él.')}
             </p>
             <dl className="stats">
@@ -309,12 +311,14 @@ function IndumentariaSection({ products, content }: { products: Product[]; conte
         <div className="chapter reveal">
           <div className="chapter-left">
             <span className="label label-bar">— Capítulo 02</span>
-            <h2>Indumentaria</h2>
+            <h2 data-cms-s="indumentaria" data-cms-f="chapter_title">
+              {g(content, 'indumentaria', 'chapter_title', 'Indumentaria')}
+            </h2>
           </div>
           <div className="chapter-num">02</div>
           <div className="chapter-right">
             <span className="label">Vol. 01 · Cinco piezas</span>
-            <p className="body">
+            <p className="body" data-cms-s="indumentaria" data-cms-f="chapter_body">
               {g(content, 'indumentaria', 'chapter_body', 'Camisas, T-shirts de vestir y piezas pensadas para reuniones, citas y la vida diaria de quien se viste con intención. Cada pieza lleva el bolsillo en tela AV.')}
             </p>
           </div>
@@ -333,15 +337,15 @@ function IndumentariaSection({ products, content }: { products: Product[]; conte
           </div>
           <div className="fabric-stmt reveal d1">
             <span className="label label-bar">— La tela del archivo</span>
-            <h3>
+            <h3 data-cms-s="indumentaria" data-cms-f="statement_title">
               {g(content, 'indumentaria', 'statement_title', 'Ropa que carga memoria.').split('\n').map((line, i, arr) => (
                 <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
               ))}
             </h3>
-            <p className="lede">
+            <p className="lede" data-cms-s="indumentaria" data-cms-f="statement_lede">
               {g(content, 'indumentaria', 'statement_lede', 'Cada pieza documenta. Cada costura es un argumento.')}
             </p>
-            <p>
+            <p data-cms-s="indumentaria" data-cms-f="statement_body">
               {g(content, 'indumentaria', 'statement_body', 'Diseñamos para quienes se visten con intención. Camisas de vestir, T-shirts de autor y piezas de temporada — todas con el bolsillo de identificación AV bordado en tela propia.')}
             </p>
             <div style={{ marginTop: 22 }}>
@@ -417,12 +421,14 @@ function MaquinasSection({ machines, content }: { machines: MachineLocation[]; c
         <div className="chapter reveal" style={{ borderColor: 'rgba(242,231,223,0.18)' }}>
           <div className="chapter-left">
             <span className="label label-bar" style={{ color: 'var(--av-taupe)' }}>— Capítulo 03</span>
-            <h2>Máquinas</h2>
+            <h2 data-cms-s="maquinas" data-cms-f="chapter_title">
+              {g(content, 'maquinas', 'chapter_title', 'Máquinas')}
+            </h2>
           </div>
           <div className="chapter-num" style={{ color: 'var(--av-cream)' }}>03</div>
           <div className="chapter-right">
             <span className="label" style={{ color: 'var(--av-taupe)' }}>Red de cinco unidades</span>
-            <p className="body" style={{ color: 'var(--av-taupe)' }}>
+            <p className="body" style={{ color: 'var(--av-taupe)' }} data-cms-s="maquinas" data-cms-f="chapter_body">
               {g(content, 'maquinas', 'chapter_body', 'Una red de vending culturales en los puntos donde la isla circula — malls, lobbies, terminales. Snack, agua, refresco. Y el archivo viviendo en silencio al lado.')}
             </p>
           </div>
