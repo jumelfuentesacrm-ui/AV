@@ -1,17 +1,17 @@
 export const dynamic = 'force-dynamic'
 
-import { Suspense } from 'react'
 import HomeClient from '@/components/home/HomeClient'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import type { Film, Product, MachineLocation, PageSection } from '@/types'
 
 async function getData() {
   const supabase = createClient()
+  const supa  = createServiceClient()
   const [filmsRes, productsRes, machinesRes, sectionsRes] = await Promise.all([
     supabase.from('films').select('*').eq('featured', true).order('created_at', { ascending: false }).limit(6),
     supabase.from('products').select('*, product_variants(*)').eq('featured', true).eq('active', true).limit(8),
     supabase.from('machine_locations').select('*').eq('active', true).order('created_at'),
-    supabase.from('page_sections').select('*').order('order_index', { ascending: true }),
+    supa.from('page_sections').select('*').order('order_index', { ascending: true }),
   ])
 
   const sections = (sectionsRes.data ?? []) as PageSection[]
@@ -28,9 +28,5 @@ async function getData() {
 
 export default async function HomePage() {
   const { films, products, machines, content } = await getData()
-  return (
-    <Suspense fallback={null}>
-      <HomeClient films={films} products={products} machines={machines} content={content} />
-    </Suspense>
-  )
+  return <HomeClient films={films} products={products} machines={machines} content={content} />
 }

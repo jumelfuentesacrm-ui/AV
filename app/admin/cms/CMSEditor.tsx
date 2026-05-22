@@ -644,19 +644,15 @@ export default function CMSEditor({ sections }: { sections: PageSection[] }) {
     `
     doc.head.appendChild(style)
 
-    // Inject live-update listener: parent posts av_cms_update → update DOM textContent instantly
-    const liveScript = doc.createElement('script')
-    liveScript.textContent = `
-      (function() {
-        window.addEventListener('message', function(e) {
-          if (!e.data || !e.data.av_cms_update) return;
-          var u = e.data.av_cms_update;
-          var els = document.querySelectorAll('[data-cms-s="' + u.section + '"][data-cms-f="' + u.field + '"]');
-          els.forEach(function(el) { el.textContent = u.value || ''; });
-        });
-      })();
-    `
-    doc.head.appendChild(liveScript)
+    // Live-update listener: parent posts av_cms_update → update DOM textContent instantly
+    // Use contentWindow directly (same-origin) to avoid injecting <script> into React-owned DOM
+    iframe.contentWindow!.addEventListener('message', (e: MessageEvent) => {
+      if (!e.data?.av_cms_update) return
+      const { section, field, value } = e.data.av_cms_update as { section: string; field: string; value: string }
+      doc.querySelectorAll<HTMLElement>(`[data-cms-s="${section}"][data-cms-f="${field}"]`).forEach(el => {
+        el.textContent = value ?? ''
+      })
+    })
 
     // Field-level click handlers (including product slots)
     const fieldEls = doc.querySelectorAll<HTMLElement>('[data-cms-s][data-cms-f]')
@@ -693,7 +689,7 @@ export default function CMSEditor({ sections }: { sections: PageSection[] }) {
     const iframe = iframeRef.current
     if (iframe) {
       setIframeReady(false)
-      iframe.src = iframe.src
+      iframe.src = '/?_cms=' + Date.now()
     }
   }
 
