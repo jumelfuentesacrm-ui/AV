@@ -52,13 +52,13 @@ function HeroSection({ content }: { content?: Content }) {
   return (
     <header className="hero" id="top">
       <div className="hero-sun sunburst" />
-      <div className="hero-top">
+      <div className="hero-top" data-cms-s="hero" data-cms-f="top_bar">
         {g(content, 'hero', 'top_bar', 'Archivo Vivo · Est. MMXXVI · San Juan, PR')}
       </div>
       <div className="hero-content">
         <div className="hero-rule" />
         <div className="hero-logo-wrap">
-          <span className="hero-logo-text wordmark">Archivo Vivo</span>
+          <span className="hero-logo-text wordmark" data-cms-s="hero" data-cms-f="title">Archivo Vivo</span>
         </div>
         <div className="hero-tagline">
           Ideas <i /> Visión <i /> Legado
@@ -82,13 +82,13 @@ function ManifestoSection({ content }: { content?: Content }) {
       <div className="wrap">
         <div className="label label-bar reveal">— Prólogo · 00 / Manifiesto</div>
         <div className="manifesto-grid" style={{ marginTop: 40 }}>
-          <h1 className="reveal d1">
+          <h1 className="reveal d1" data-cms-s="manifesto" data-cms-f="heading">
             {g(content, 'manifesto', 'heading', 'Donde el\nartista se\nvuelve\nmemoria.').split('\n').map((line, i, arr) => (
               <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
             ))}
           </h1>
           <div className="manifesto-body reveal d2">
-            <p className="lede">
+            <p className="lede" data-cms-s="manifesto" data-cms-f="lede">
               {g(content, 'manifesto', 'lede', 'Archivo Vivo no es un museo. Es un archivo que respira, hecho de cintas, telas y máquinas.')}
             </p>
             <p>
@@ -428,12 +428,12 @@ function MaquinasSection({ machines, content }: { machines: MachineLocation[]; c
 
           <div className="maq-copy reveal d1">
             <span className="label label-bar" style={{ color: 'var(--av-taupe)' }}>— Mientras esperas el agua</span>
-            <h3>
+            <h3 data-cms-s="maquinas" data-cms-f="copy_title">
               {g(content, 'maquinas', 'copy_title', 'El archivo también vive en el mall.').split('\n').map((line, i, arr) => (
                 <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
               ))}
             </h3>
-            <p>
+            <p data-cms-s="maquinas" data-cms-f="copy_body">
               {g(content, 'maquinas', 'copy_body', 'La pantalla integrada reproduce los episodios del archivo en bucle, junto al inventario habitual de una vending. La idea: que mientras esperas tu agua, conozcas a alguien que cambió la cultura de la isla.')}
             </p>
             <div className="locations">
@@ -472,12 +472,12 @@ function SubscribeSection({ content }: { content?: Content }) {
           <i style={{ display: 'block', width: 24, height: 2, background: 'currentColor' }} />
           Boletín del archivo
         </span>
-        <h2 className="reveal d1" style={{ marginTop: 28 }}>
+        <h2 className="reveal d1" data-cms-s="subscribe" data-cms-f="heading" style={{ marginTop: 28 }}>
           {g(content, 'subscribe', 'heading', 'Mantente cerca del archivo.').split('\n').map((line, i, arr) => (
             <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
           ))}
         </h2>
-        <p className="reveal d2">
+        <p className="reveal d2" data-cms-s="subscribe" data-cms-f="body">
           {g(content, 'subscribe', 'body', 'Un correo cada estación: el próximo episodio, drops nuevos de indumentaria, y dónde encontrar la siguiente máquina. Sin ruido — la frecuencia del archivo.')}
         </p>
         <SubscribeForm />

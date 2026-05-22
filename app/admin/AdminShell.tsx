@@ -21,6 +21,7 @@ const NAV = [
 export default function AdminShell({ children, isAdmin }: { children: React.ReactNode; isAdmin: boolean }) {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
+  const isCMS = pathname === '/admin/cms'
   const isActive = (href: string) => href === '/admin' ? pathname === '/admin' : pathname.startsWith(href)
 
   return (
@@ -38,7 +39,7 @@ export default function AdminShell({ children, isAdmin }: { children: React.Reac
       <aside className={`av-sidebar${open ? ' is-open' : ''}`}>
         <div style={{ padding: '18px 14px 14px', borderBottom: '1px solid rgba(242,231,223,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <span className="wordmark" style={{ fontSize: 14, color: 'var(--av-cream)', letterSpacing: '0.02em', display: 'block' }}>Archivo Vivo</span>
+            <span style={{ fontFamily: 'var(--font-montserrat, Montserrat, system-ui)', fontWeight: 800, fontSize: 14, color: 'var(--av-cream)', letterSpacing: '0.02em', display: 'block', textTransform: 'uppercase' }}>Archivo Vivo</span>
             <span style={{ fontFamily: 'var(--f-mono)', fontSize: 8, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'var(--av-gray)', display: 'block', marginTop: 3 }}>
               {isAdmin ? 'Admin' : 'Staff'}
             </span>
@@ -59,8 +60,9 @@ export default function AdminShell({ children, isAdmin }: { children: React.Reac
                   alignItems: 'center',
                   gap: 9,
                   padding: '9px 10px',
-                  fontFamily: 'var(--f-sans)',
-                  fontSize: 13,
+                  fontFamily: 'var(--font-montserrat, Montserrat, system-ui)',
+                  fontWeight: active ? 600 : 400,
+                  fontSize: 12,
                   color: active ? 'rgba(242,231,223,0.95)' : 'rgba(242,231,223,0.4)',
                   background: active ? 'rgba(242,231,223,0.07)' : 'transparent',
                   borderRadius: 2,
@@ -92,11 +94,11 @@ export default function AdminShell({ children, isAdmin }: { children: React.Reac
           <button onClick={() => setOpen(true)} className="av-hamburger" aria-label="Menú">
             <span /><span /><span />
           </button>
-          <span className="wordmark" style={{ fontSize: 13, color: 'var(--av-cream)' }}>Archivo Vivo</span>
+          <span style={{ fontFamily: 'var(--font-montserrat, Montserrat, system-ui)', fontWeight: 700, fontSize: 13, color: 'var(--av-cream)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Archivo Vivo</span>
           <div style={{ width: 36 }} />
         </header>
 
-        <main style={{ flex: 1, overflowY: 'auto' }}>
+        <main style={{ flex: 1, overflow: isCMS ? 'hidden' : 'auto' }}>
           {children}
         </main>
       </div>
@@ -107,6 +109,9 @@ export default function AdminShell({ children, isAdmin }: { children: React.Reac
           display: flex;
           background: #EDE9E4;
           overflow: hidden;
+          font-family: var(--font-montserrat, 'Montserrat', system-ui, sans-serif);
+          --f-display: var(--font-montserrat, 'Montserrat', system-ui, sans-serif);
+          --f-sans:    var(--font-montserrat, 'Montserrat', system-ui, sans-serif);
         }
         .av-sidebar {
           width: 216px;

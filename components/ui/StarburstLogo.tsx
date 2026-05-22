@@ -6,45 +6,31 @@ interface StarburstLogoProps {
   className?: string
 }
 
+const RAY_PATH = 'M 46 10 A 4 4 0 0 1 54 10 L 50.75 38 L 49.25 38 Z'
+const ANGLES = Array.from({ length: 18 }, (_, i) => i * 20)
+
 export default function StarburstLogo({
   size = 40,
   color = 'currentColor',
   className = '',
 }: StarburstLogoProps) {
-  const center = size / 2
-  const spokeCount = 16
-  const spokeWidth = size * 0.09
-  const spokeHeight = size * 0.38
-  const spokeOffset = size * 0.14
-  const rx = spokeWidth / 2
-
-  const spokes = Array.from({ length: spokeCount }, (_, i) => {
-    const angle = (360 / spokeCount) * i
-    return (
-      <rect
-        key={i}
-        x={-spokeWidth / 2}
-        y={-(spokeOffset + spokeHeight)}
-        width={spokeWidth}
-        height={spokeHeight}
-        rx={rx}
-        ry={rx}
-        fill={color}
-        transform={`rotate(${angle})`}
-        style={{ transformOrigin: '0 0' }}
-      />
-    )
-  })
-
   return (
     <svg
       width={size}
       height={size}
-      viewBox={`${-center} ${-center} ${size} ${size}`}
+      viewBox="0 0 100 100"
       className={className}
-      aria-label="Archivo Vivo logo mark"
+      aria-label="Sol logo mark"
     >
-      {spokes}
+      <g fill={color}>
+        {ANGLES.map((angle) => (
+          <path
+            key={angle}
+            transform={`rotate(${angle} 50 50)`}
+            d={RAY_PATH}
+          />
+        ))}
+      </g>
     </svg>
   )
 }

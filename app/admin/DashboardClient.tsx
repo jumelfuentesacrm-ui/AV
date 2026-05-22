@@ -30,32 +30,36 @@ function fmt$(n: number) {
 }
 
 function Trend({ val }: { val: number | null }) {
-  if (val === null) return <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, color: 'rgba(52,49,51,0.3)', letterSpacing: '0.1em' }}>Sin datos anteriores</span>
+  if (val === null) return <span style={{ fontSize: 11, color: 'rgba(52,49,51,0.3)' }}>Sin datos anteriores</span>
   const up = val >= 0
   return (
-    <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', color: up ? '#2a6e44' : '#c64a3b' }}>
-      {up ? '▲' : '▼'} {Math.abs(val).toFixed(1)}% vs periodo anterior
+    <span style={{ fontSize: 11, color: up ? '#1e7e4a' : '#c64a3b', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+      <span style={{ fontSize: 8 }}>{up ? '▲' : '▼'}</span>
+      {Math.abs(val).toFixed(1)}% vs mes anterior
     </span>
   )
 }
 
-function KPI({ label, value, trend, sub, dark, muted }: {
-  label: string; value: string; trend?: number | null; sub?: string; dark?: boolean; muted?: boolean
+function KPI({ label, value, trend, sub, accent, muted }: {
+  label: string; value: string; trend?: number | null; sub?: string; accent?: boolean; muted?: boolean
 }) {
   return (
     <div style={{
-      background: dark ? '#1a1815' : '#fff',
-      border: dark ? 'none' : '1px solid rgba(52,49,51,0.1)',
-      padding: '18px 20px',
+      background: '#fff',
+      border: '1px solid rgba(52,49,51,0.09)',
+      borderTop: accent ? '2.5px solid #C9A870' : '1px solid rgba(52,49,51,0.09)',
+      padding: '16px 18px 18px',
     }}>
-      <p style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: dark ? 'rgba(242,231,223,0.4)' : 'rgba(52,49,51,0.38)', margin: '0 0 10px' }}>
+      <p style={{ fontSize: 10, fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'rgba(52,49,51,0.42)', margin: '0 0 10px' }}>
         {label}
       </p>
-      <p style={{ fontFamily: 'var(--f-display)', fontWeight: 800, fontSize: 28, color: dark ? '#FAF5F0' : muted ? 'rgba(52,49,51,0.22)' : '#1a1815', margin: '0 0 6px', lineHeight: 1 }}>
+      <p style={{ fontWeight: 700, fontSize: 26, color: muted ? 'rgba(52,49,51,0.2)' : '#1a1815', margin: '0 0 5px', lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}>
         {value}
       </p>
       {trend !== undefined && <Trend val={trend ?? null} />}
-      {sub && !trend && <span style={{ fontFamily: 'var(--f-mono)', fontSize: 9, letterSpacing: '0.1em', color: dark ? 'rgba(242,231,223,0.3)' : 'rgba(52,49,51,0.35)' }}>{sub}</span>}
+      {sub && trend === undefined && (
+        <span style={{ fontSize: 11, color: 'rgba(52,49,51,0.38)' }}>{sub}</span>
+      )}
     </div>
   )
 }
@@ -148,10 +152,10 @@ export default function DashboardClient({ stats, chartOrders }: { stats: Dashboa
 
       {/* KPI grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px,1fr))', gap: 10, marginBottom: 24 }}>
-        <KPI label="Ingresos (30d)" value={fmt$(stats.revenue30d)} trend={revTrend} dark />
+        <KPI label="Ingresos (30d)" value={fmt$(stats.revenue30d)} trend={revTrend} accent />
         <KPI label="AOV" value={stats.aov > 0 ? `$${stats.aov.toFixed(2)}` : '—'} sub="Valor promedio por pedido" />
         <KPI label="Pedidos (30d)" value={String(stats.orders30d)} trend={ordTrend} />
-        <KPI label="Conversión" value={`${conversionRate.toFixed(1)}%`} sub={`${stats.usersWithOrders} de ${stats.users} usuarios con pedido`} />
+        <KPI label="Conversión" value={`${conversionRate.toFixed(1)}%`} sub={`${stats.usersWithOrders} de ${stats.users} compradores`} />
         <KPI label="Usuarios nuevos" value={String(stats.newUsers30d)} sub={`Total: ${stats.users}`} />
         <KPI label="Productos activos" value={String(stats.products)} sub="En catálogo" />
       </div>

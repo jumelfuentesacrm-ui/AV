@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Anton, DM_Sans, Fira_Code, Caveat } from 'next/font/google'
+import { Anton, DM_Sans, Fira_Code, Caveat, Montserrat } from 'next/font/google'
 import './globals.css'
 import { CartProvider } from '@/context/CartContext'
 
@@ -28,6 +28,13 @@ const caveat = Caveat({
   subsets: ['latin'],
   weight: ['400', '500', '600'],
   variable: '--font-caveat',
+  display: 'swap',
+})
+
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  variable: '--font-montserrat',
   display: 'swap',
 })
 
@@ -62,7 +69,7 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${anton.variable} ${dmSans.variable} ${firaCode.variable} ${caveat.variable}`}
+      className={`${anton.variable} ${dmSans.variable} ${firaCode.variable} ${caveat.variable} ${montserrat.variable}`}
     >
       <body className="antialiased overflow-x-hidden">
         <CartProvider>

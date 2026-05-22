@@ -21,8 +21,8 @@ export function createClient() {
 }
 
 export function createServiceClient() {
-  const url         = process.env.NEXT_PUBLIC_SUPABASE_URL     ?? 'https://placeholder.supabase.co'
-  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY    ?? 'placeholder-service-key'
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://placeholder.supabase.co'
+  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY ?? 'placeholder-service-key'
   return createSupabaseClient(url, serviceRole, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
