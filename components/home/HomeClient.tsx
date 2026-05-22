@@ -45,13 +45,13 @@ function HeroSection() {
   return (
     <header className="hero" id="top">
       <div className="hero-sun sunburst" />
-      <div className="hero-top">Archivo Vivo · Est. MMXXVI · San Juan, PR</div>
+      <div className="hero-top" data-cms-s="hero" data-cms-f="tagline">Archivo Vivo · Est. MMXXVI · San Juan, PR</div>
       <div className="hero-content">
         <div className="hero-rule" />
         <div className="hero-logo-wrap">
-          <span className="hero-logo-text wordmark">Archivo Vivo</span>
+          <span className="hero-logo-text wordmark" data-cms-s="hero" data-cms-f="title">Archivo Vivo</span>
         </div>
-        <div className="hero-tagline">
+        <div className="hero-tagline" data-cms-s="hero" data-cms-f="subtitle">
           Ideas <i /> Visión <i /> Legado
         </div>
       </div>
@@ -73,12 +73,12 @@ function ManifestoSection() {
       <div className="wrap">
         <div className="label label-bar reveal">— Prólogo · 00 / Manifiesto</div>
         <div className="manifesto-grid" style={{ marginTop: 40 }}>
-          <h1 className="reveal d1">
+          <h1 className="reveal d1" data-cms-s="manifesto" data-cms-f="title">
             Donde el<br />artista se<br />vuelve<br />memoria.
           </h1>
           <div className="manifesto-body reveal d2">
-            <p className="lede">Archivo Vivo no es un museo. Es un archivo que respira, hecho de cintas, telas y máquinas.</p>
-            <p>Documentamos en imagen a quienes han moldeado la cultura de la isla, vestimos a quien quiera llevar un retazo de esa memoria en el pecho, y colocamos el archivo en los lugares donde la gente realmente vive — el mall, el lobby, la terminal.</p>
+            <p className="lede" data-cms-s="manifesto" data-cms-f="subtitle">Archivo Vivo no es un museo. Es un archivo que respira, hecho de cintas, telas y máquinas.</p>
+            <p data-cms-s="manifesto" data-cms-f="body">Documentamos en imagen a quienes han moldeado la cultura de la isla, vestimos a quien quiera llevar un retazo de esa memoria en el pecho, y colocamos el archivo en los lugares donde la gente realmente vive — el mall, el lobby, la terminal.</p>
             <p>Tres capítulos. Una misma idea: lo que se archiva no muere — sigue vivo en el cuerpo de quien lo lleva.</p>
             <div className="manifesto-sig">
               <span className="ink">Archivo Vivo</span>
@@ -412,8 +412,8 @@ function MaquinasSection({ machines }: { machines: MachineLocation[] }) {
 
           <div className="maq-copy reveal d1">
             <span className="label label-bar" style={{ color: 'var(--av-taupe)' }}>— Mientras esperas el agua</span>
-            <h3>El archivo<br />también vive<br />en el mall.</h3>
-            <p>
+            <h3 data-cms-s="maquinas" data-cms-f="subtitle">El archivo<br />también vive<br />en el mall.</h3>
+            <p data-cms-s="maquinas" data-cms-f="body">
               La pantalla integrada reproduce los episodios del archivo en bucle, junto al inventario
               habitual de una vending. La idea: que mientras esperas tu agua, conozcas a alguien que
               cambió la cultura de la isla.
@@ -454,10 +454,10 @@ function SubscribeSection() {
           <i style={{ display: 'block', width: 24, height: 2, background: 'currentColor' }} />
           Boletín del archivo
         </span>
-        <h2 className="reveal d1" style={{ marginTop: 28 }}>
+        <h2 className="reveal d1" data-cms-s="subscribe" data-cms-f="title" style={{ marginTop: 28 }}>
           Mantente cerca<br />del archivo.
         </h2>
-        <p className="reveal d2">
+        <p className="reveal d2" data-cms-s="subscribe" data-cms-f="subtitle">
           Un correo cada estación: el próximo episodio, drops nuevos de indumentaria, y dónde encontrar
           la siguiente máquina. Sin ruido — la frecuencia del archivo.
         </p>
