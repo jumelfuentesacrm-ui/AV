@@ -1,17 +1,18 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 
 export async function toggleSectionVisible(id: string, visible: boolean) {
-  const supabase = createClient()
-  await supabase.from('page_sections').update({ visible: !visible }).eq('id', id)
+  const supabase = createServiceClient()
+  const { error } = await supabase.from('page_sections').update({ visible: !visible }).eq('id', id)
+  if (error) throw new Error(error.message)
   revalidatePath('/')
 }
 
 export async function moveSectionUp(id: string, currentIndex: number) {
   if (currentIndex <= 0) return
-  const supabase = createClient()
+  const supabase = createServiceClient()
   const { data: above } = await supabase
     .from('page_sections')
     .select('id, order_index')
@@ -25,7 +26,7 @@ export async function moveSectionUp(id: string, currentIndex: number) {
 }
 
 export async function moveSectionDown(id: string, currentIndex: number) {
-  const supabase = createClient()
+  const supabase = createServiceClient()
   const { data: below } = await supabase
     .from('page_sections')
     .select('id, order_index')
@@ -43,7 +44,7 @@ export async function updateSectionContent(
   label: string,
   fields: Record<string, string>
 ) {
-  const supabase = createClient()
+  const supabase = createServiceClient()
   const { data: existing } = await supabase
     .from('page_sections')
     .select('content')
@@ -51,7 +52,8 @@ export async function updateSectionContent(
     .single()
   const current = (existing?.content as Record<string, unknown>) ?? {}
   const updated = { ...current, ...fields }
-  await supabase.from('page_sections').update({ label, content: updated }).eq('id', id)
+  const { error } = await supabase.from('page_sections').update({ label, content: updated }).eq('id', id)
+  if (error) throw new Error(error.message)
   revalidatePath('/')
 }
 
@@ -60,7 +62,7 @@ export async function assignProductSlot(
   slotKey: string,
   productId: string | null
 ) {
-  const supabase = createClient()
+  const supabase = createServiceClient()
   const { data: existing } = await supabase
     .from('page_sections')
     .select('content')
@@ -68,9 +70,10 @@ export async function assignProductSlot(
     .single()
   const current = (existing?.content as Record<string, unknown>) ?? {}
   const currentSlots = (current.product_slots as Record<string, string | null>) ?? {}
-  await supabase
+  const { error } = await supabase
     .from('page_sections')
     .update({ content: { ...current, product_slots: { ...currentSlots, [slotKey]: productId } } })
     .eq('id', sectionId)
+  if (error) throw new Error(error.message)
   revalidatePath('/')
 }

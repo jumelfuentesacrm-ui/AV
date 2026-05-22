@@ -209,6 +209,7 @@ function SectionEditor({
 }) {
   const [isPending, startTransition] = useTransition()
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const content = (section.content as Record<string, string>) ?? {}
   const fields = SECTION_FIELDS[section.section_key] ?? []
 
@@ -247,10 +248,16 @@ function SectionEditor({
         if (v !== null) fieldValues[f] = v as string
       }
     })
+    setSaveError(null)
     startTransition(async () => {
-      await updateSectionContent(section.id, label, fieldValues)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      try {
+        await updateSectionContent(section.id, label, fieldValues)
+        setSaved(true)
+        setTimeout(() => setSaved(false), 2500)
+      } catch (err) {
+        setSaveError(err instanceof Error ? err.message : 'Error al guardar')
+        setTimeout(() => setSaveError(null), 5000)
+      }
     })
   }
 
@@ -371,13 +378,18 @@ function SectionEditor({
           )
         })}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 4 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10, paddingTop: 4 }}>
+          {saveError && (
+            <span style={{ fontSize: 10, fontFamily: 'monospace', color: '#c64a3b', maxWidth: 200 }}>
+              ✕ {saveError}
+            </span>
+          )}
           <button
             type="submit"
             disabled={isPending}
             style={{
               padding: '7px 20px',
-              background: saved ? '#1e7e4a' : '#1a1815',
+              background: saveError ? '#c64a3b' : saved ? '#1e7e4a' : '#1a1815',
               color: '#FAF5F0',
               border: 'none',
               cursor: isPending ? 'wait' : 'pointer',
@@ -389,7 +401,7 @@ function SectionEditor({
               opacity: isPending ? 0.7 : 1,
             }}
           >
-            {saved ? '✓ Guardado' : isPending ? 'Guardando…' : 'Guardar'}
+            {saveError ? '✕ Error' : saved ? '✓ Guardado' : isPending ? 'Guardando…' : 'Guardar'}
           </button>
         </div>
       </form>
